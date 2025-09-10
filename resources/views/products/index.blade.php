@@ -1,0 +1,157 @@
+@extends('layouts.app')
+@section('title') Главная страница @endsection
+@section('main_content')
+<section id="banner" style="background: #F9F3EC;">
+    <div class="container">
+      <div class="swiper main-swiper">
+        <div class="swiper-wrapper">
+          <div class="swiper-slide py-5">
+            <div class="row banner-content align-items-center">
+              <div class="img-wrapper col-md-5">
+                <img src="images/ornot.png" class="img-fluid">
+              </div>
+              <div class="content-wrapper col-md-7 p-5 mb-5">
+                <h2 class="banner-title display-1 fw-normal">Добро <span class="text-primary">пожаловать!</span>
+                </h2>
+              </div>
+            </div>
+          </div>
+          <div class="swiper-slide py-5">
+            <div class="row banner-content align-items-center">
+              <div class="img-wrapper col-md-5">
+                <img src="images/ornot.png" class="img-fluid">
+              </div>
+              <div class="content-wrapper col-md-7 p-5 mb-5">
+                <div class="secondary-font text-primary text-uppercase mb-4">Целых 10% =)</div>
+                <h2 class="banner-title display-1 fw-normal">Дарим скидку <span class="text-primary"><br>На первый заказ<br></span>
+                </h2>
+              </div>
+            </div>
+          </div>
+          <div class="swiper-slide py-5">
+            <div class="row banner-content align-items-center">
+              <div class="img-wrapper col-md-5">
+                <img src="images/ornot.png" class="img-fluid">
+              </div>
+              <div class="content-wrapper col-md-7 p-5 mb-5">
+                <div class="secondary-font text-primary text-uppercase mb-4">Не текст</div>
+                <h2 class="banner-title display-1 fw-normal">Текст <span class="text-primary">еще текст</span>
+                </h2>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="swiper-pagination mb-5"></div>
+      </div>
+    </div>
+  </section>
+<div class="container">
+    @if(isset($query))
+        <h2>Результаты поиска для: {{ $query }}</h2>
+    @endif
+    @if($products->isEmpty())
+        <p>Ничего не найдено.</p>
+    @else
+    @foreach($categories as $category)
+    @if($products->has($category->id))
+        <section id="{{ Str::slug($category->name_category) }}" class="my-5">
+            <div class="container my-5 py-5">
+                <div class="section-header d-md-flex justify-content-between align-items-center">
+                    <h2 class="display-3 fw-normal">{{ $category->name_category }}</h2>
+                </div>
+                <div class="isotope-container row">
+                    @foreach($products[$category->id] as $product)
+                        <div class="item cat col-md-4 col-lg-3 my-4">
+                            <div class="card position-relative">
+                                <a href="{{ route('product.show', $product->id) }}">
+                                    <img src="{{ asset('storage/' . $product->img_product) }}" class="img-fluid rounded-4" alt="{{ $product->name_product }}">
+                                </a>
+                                <div class="card-body p-0">
+                                    <a href="{{ route('product.show', $product->id) }}">
+                                        <h3 class="card-title pt-4 m-0">{{ $product->name_product }}</h3>
+                                    </a>
+                                    <div class="card-text">
+                                        <span class="rating secondary-font">
+                                            {{ Str::limit($product->description_product, 100) }}
+                                        </span>
+                                        <h3 class="secondary-font text-primary">{{ $product->price_product }} руб</h3>
+                                        <div class="d-flex flex-wrap mt-3">
+                                            <form action="{{ route('cart.add', $product->id) }}" method="POST" id="addToCartForm">
+                                                @csrf
+                                                <button type="submit" class="btn btn-primary">Добавить в корзину</button>
+                                            </form>
+                                            @if(session('success') && session('product_id') == $product->id)
+                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+@endforeach
+@endif
+  <section id="testimonial">
+    <div class="container my-5 py-5">
+      <div class="row">
+        <div class="offset-md-1 col-md-10">
+          <div class="swiper testimonial-swiper">
+            <div class="swiper-wrapper">
+              <div class="swiper-slide">
+                <div class="row ">
+                  <div class="col-2">
+                    <iconify-icon icon="mingcute:dinner-line" class="quote-icon text-primary"></iconify-icon>
+                  </div>
+                  <div class="col-md-10 mt-md-5 p-5 pt-0 pt-md-5">
+                    <p class="testimonial-content fs-2">Мы разработали более 25 разновидностей фирменных блюд с неповторимым вкусом и продолжаем расширять ассортимент.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="swiper-slide">
+                <div class="row ">
+                  <div class="col-2">
+                    <iconify-icon icon="mingcute:dinner-line" class="quote-icon text-primary"></iconify-icon>
+                  </div>
+                  <div class="col-md-10 mt-md-5 p-5 pt-0 pt-md-5">
+                    <p class="testimonial-content fs-2">Тут будет умный текст.</p>
+                  </div>
+                </div>
+              </div>
+              <div class="swiper-slide">
+                <div class="row ">
+                  <div class="col-2">
+                    <iconify-icon icon="mingcute:dinner-line" class="quote-icon text-primary"></iconify-icon>
+                  </div>
+                  <div class="col-md-10 mt-md-5 p-5 pt-0 pt-md-5">
+                    <p class="testimonial-content fs-2">И тут тоже.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="swiper-pagination"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+        window.onbeforeunload = function() {
+            localStorage.setItem('scrollPosition', window.scrollY);
+        };
+        window.onload = function() {
+            const scrollPosition = localStorage.getItem('scrollPosition');
+            if (scrollPosition) {
+                window.scrollTo(0, parseInt(scrollPosition));
+                localStorage.removeItem('scrollPosition');
+            }
+        };
+    </script>
+  </section>
+@endsection
+

@@ -1,0 +1,99 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Отчет по смене #{{ $shift->id }}</h2>
+                <a href="{{ route('manager.shifts.index') }}" class="btn btn-secondary">Назад к списку</a>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Информация о смене</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Дата:</strong> {{ $shift->start_time->format('d.m.Y') }}</p>
+                            <p><strong>Время начала:</strong> {{ $shift->start_time->format('H:i') }}</p>
+                            <p><strong>Время окончания:</strong> {{ $shift->end_time ? $shift->end_time->format('H:i') : 'В процессе' }}</p>
+                            <p><strong>Длительность:</strong> {{ $shift->duration ?? 'В процессе' }}</p>
+                            <p><strong>Статус:</strong> 
+                                <span class="badge bg-{{ $shift->isActive() ? 'success' : 'secondary' }}">
+                                    {{ $shift->isActive() ? 'Активна' : 'Завершена' }}
+                                </span>
+                            </p>
+                            @if($shift->notes)
+                                <p><strong>Комментарии:</strong></p>
+                                <div class="alert alert-info">{{ $shift->notes }}</div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Статистика</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>Всего заказов:</strong> {{ $shift->total_orders }}</p>
+                            <p><strong>Общая выручка:</strong> {{ number_format($shift->total_revenue, 2) }} ₽</p>
+                            <p><strong>Наличными:</strong> {{ number_format($shift->cash_sales, 2) }} ₽</p>
+                            <p><strong>Картой:</strong> {{ number_format($shift->card_sales, 2) }} ₽</p>
+                            @if($shift->total_orders > 0)
+                                <p><strong>Средний чек:</strong> {{ number_format($shift->total_revenue / $shift->total_orders, 2) }} ₽</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if($orders->count() > 0)
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Заказы за смену</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>№</th>
+                                        <th>Время</th>
+                                        <th>Сумма</th>
+                                        <th>Оплата</th>
+                                        <th>Статус</th>
+                                        <th>Состав</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($orders as $order)
+                                        <tr>
+                                            <td>#{{ $order->id }}</td>
+                                            <td>{{ $order->created_at->format('H:i') }}</td>
+                                            <td>{{ $order->total_amount }} ₽</td>
+                                            <td>{{ $order->payment_method_text }}</td>
+                                            <td>
+                                                <span class="badge {{ $order->status_badge_class }}">
+                                                    {{ $order->status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @foreach($order->orderItems as $item)
+                                                    {{ $item->product->name_product }} ({{ $item->quantity }}){{ !$loop->last ? ', ' : '' }}
+                                                @endforeach
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection
