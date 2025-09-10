@@ -117,7 +117,7 @@
                         <li><a class="dropdown-item" href="{{ route('admin.categories.index') }}">Управление категориями</a></li>
                         <li><a class="dropdown-item" href="{{ route('admin.orders.index') }}">Управление заказами</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ route('admin.employees.index') }}">Управление сотрудниками</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.users.index') }}">Управление пользователями</a></li>
                         <li><a class="dropdown-item" href="{{ route('admin.ingredients.index') }}">Управление ингредиентами</a></li>
                         <li><a class="dropdown-item" href="{{ route('admin.schedules.index') }}">Графики работы</a></li>
                         <li><hr class="dropdown-divider"></li>

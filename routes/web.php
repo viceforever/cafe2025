@@ -94,10 +94,12 @@ Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':admin'])->pref
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::patch('/orders/{order}/confirm', [AdminOrderController::class, 'confirm'])->name('orders.confirm');
 
-    Route::resource('employees', EmployeeController::class);
+    Route::resource('users', EmployeeController::class);
+    Route::patch('/users/{user}/role', [EmployeeController::class, 'updateRole'])->name('users.update-role');
 
     Route::resource('ingredients', IngredientController::class);
     Route::patch('/ingredients/{ingredient}/quantity', [IngredientController::class, 'updateQuantity'])->name('ingredients.update-quantity');
+    Route::get('/ingredients-all', [IngredientController::class, 'getAll'])->name('ingredients.get-all');
 
     Route::resource('schedules', ScheduleController::class);
     Route::get('/schedules-bulk/create', [ScheduleController::class, 'bulkCreate'])->name('schedules.bulk-create');

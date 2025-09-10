@@ -66,6 +66,13 @@ class IngredientController extends Controller
             ->with('success', 'Ингредиент удален');
     }
 
+
+    public function getAll()
+    {
+        $ingredients = Ingredient::all();
+        return response()->json($ingredients);
+    }
+
     public function updateQuantity(Request $request, Ingredient $ingredient)
     {
         $request->validate([

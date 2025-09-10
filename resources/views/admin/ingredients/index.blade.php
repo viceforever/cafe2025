@@ -1,8 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<!-- Added padding-top to prevent navigation overlap -->
-<div class="container" style="padding-top: 100px;">
+<div class="container" style="padding-top: 200px;">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">

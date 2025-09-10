@@ -12,13 +12,13 @@ class EmployeeController extends Controller
 {
     public function index()
     {
-        $employees = User::whereIn('role', ['admin', 'manager'])->paginate(10);
-        return view('admin.employees.index', compact('employees'));
+        $users = User::paginate(15);
+        return view('admin.users.index', compact('users'));
     }
 
     public function create()
     {
-        return view('admin.employees.create');
+        return view('admin.users.create');
     }
 
     public function store(Request $request)
@@ -28,7 +28,7 @@ class EmployeeController extends Controller
             'last_name' => 'required|string|max:255',
             'phone' => 'required|string|unique:users,phone',
             'password' => 'required|string|min:6',
-            'role' => ['required', Rule::in(['manager', 'admin'])],
+            'role' => ['required', Rule::in(['client', 'manager', 'admin'])],
         ]);
 
         User::create([
@@ -39,31 +39,23 @@ class EmployeeController extends Controller
             'role' => $request->role,
         ]);
 
-        return redirect()->route('admin.employees.index')
-            ->with('success', 'Сотрудник успешно создан');
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Пользователь успешно создан');
     }
 
-    public function edit(User $employee)
+    public function edit(User $user)
     {
-        if ($employee->isClient()) {
-            abort(404);
-        }
-        
-        return view('admin.employees.edit', compact('employee'));
+        return view('admin.users.edit', compact('user'));
     }
 
-    public function update(Request $request, User $employee)
+    public function update(Request $request, User $user)
     {
-        if ($employee->isClient()) {
-            abort(404);
-        }
-
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'phone' => ['required', 'string', Rule::unique('users')->ignore($employee->id)],
+            'phone' => ['required', 'string', Rule::unique('users')->ignore($user->id)],
             'password' => 'nullable|string|min:6',
-            'role' => ['required', Rule::in(['manager', 'admin'])],
+            'role' => ['required', Rule::in(['client', 'manager', 'admin'])],
         ]);
 
         $data = [
@@ -77,21 +69,29 @@ class EmployeeController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        $employee->update($data);
+        $user->update($data);
 
-        return redirect()->route('admin.employees.index')
-            ->with('success', 'Данные сотрудника обновлены');
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Данные пользователя обновлены');
     }
 
-    public function destroy(User $employee)
+    public function destroy(User $user)
     {
-        if ($employee->isClient()) {
-            abort(404);
-        }
+        $user->delete();
 
-        $employee->delete();
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Пользователь удален');
+    }
 
-        return redirect()->route('admin.employees.index')
-            ->with('success', 'Сотрудник удален');
+    public function updateRole(Request $request, User $user)
+    {
+        $request->validate([
+            'role' => ['required', Rule::in(['client', 'manager', 'admin'])],
+        ]);
+
+        $user->update(['role' => $request->role]);
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Роль пользователя обновлена');
     }
 }
