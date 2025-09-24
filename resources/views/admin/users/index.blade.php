@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container" style="padding-top: 100px;">
+<div class="container" style="padding-top: 220px;">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -50,18 +50,11 @@
                                         </td>
                                         <td>{{ $user->created_at->format('d.m.Y') }}</td>
                                         <td>
-                                            <a href="{{ route('admin.users.edit', $user) }}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="iconify" data-icon="mdi:pencil"></i>
-                                            </a>
-                                            <form action="{{ route('admin.users.destroy', $user) }}" 
-                                                  method="POST" class="d-inline">
+                                            <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-primary">Редактировать</a>
+                                            <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                        onclick="return confirm('Удалить пользователя?')">
-                                                    <i class="iconify" data-icon="mdi:delete"></i>
-                                                </button>
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Вы уверены?')">Удалить</button>
                                             </form>
                                         </td>
                                     </tr>
@@ -74,7 +67,8 @@
                         </table>
                     </div>
                     
-                    {{ $users->links() }}
+                    {{-- заменил стандартную пагинацию на кастомную русскую --}}
+                    {{ $users->links('custom.pagination') }}
                 </div>
             </div>
         </div>

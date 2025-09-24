@@ -11,6 +11,7 @@ class Order extends Model
 
     protected $fillable = [
         'user_id', 
+        'shift_id', // добавил shift_id для связи с сменами
         'total_amount', 
         'status', 
         'payment_method', 
@@ -28,6 +29,11 @@ class Order extends Model
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function shift()
+    {
+        return $this->belongsTo(Shift::class);
     }
 
     public function getPaymentMethodTextAttribute()

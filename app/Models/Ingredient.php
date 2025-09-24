@@ -45,4 +45,10 @@ class Ingredient extends Model
         $this->quantity -= $amount;
         $this->save();
     }
+
+    public function restoreQuantity($amount)
+    {
+        $this->quantity += $amount;
+        $this->save();
+    }
 }

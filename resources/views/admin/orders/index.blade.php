@@ -12,6 +12,35 @@
                 </div>
             @endif
 
+            <!-- Добавил фильтрацию по статусу как у менеджера -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <form method="GET" action="{{ route('admin.orders.index') }}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Фильтр по статусу:</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="all" {{ request('status') === 'all' || !request('status') ? 'selected' : '' }}>
+                                    Все статусы
+                                </option>
+                                @foreach($statuses as $status)
+                                    <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>
+                                        {{ $status }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">Применить</button>
+                        </div>
+                        @if(request('status'))
+                            <div class="col-md-2 d-flex align-items-end">
+                                <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary">Сбросить</a>
+                            </div>
+                        @endif
+                    </form>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table">
                     <thead>
@@ -31,31 +60,84 @@
                                 <td>{{ $order->id }}</td>
                                 <td>{{ $order->user->last_name }} {{ $order->user->first_name }}</td>
                                 <td>{{ $order->total_amount }} ₽</td>
-                                <td>{{ $order->status }}</td>
+                                <td>
+                                    <!-- Заменил кнопки на выпадающий список изменения статуса -->
+                                    <span class="badge 
+                                        @if($order->status === 'В обработке') text-bg-warning
+                                        @elseif($order->status === 'Подтвержден') text-bg-success
+                                        @elseif($order->status === 'Готовится') text-bg-info
+                                        @elseif($order->status === 'Готов к выдаче') text-bg-primary
+                                        @elseif($order->status === 'Выдан') text-bg-success
+                                        @elseif($order->status === 'Отменен') text-bg-danger
+                                        @else text-bg-secondary
+                                        @endif
+                                        " style="
+                                        @if($order->status === 'В обработке') 
+                                            background-color: #fd7e14 !important; color: white !important;
+                                        @elseif($order->status === 'Подтвержден') 
+                                            background-color: #198754 !important; color: white !important;
+                                        @elseif($order->status === 'Готовится') 
+                                            background-color: #0dcaf0 !important; color: #000 !important;
+                                        @elseif($order->status === 'Готов к выдаче') 
+                                            background-color: #0d6efd !important; color: white !important;
+                                        @elseif($order->status === 'Выдан') 
+                                            background-color: #198754 !important; color: white !important;
+                                        @elseif($order->status === 'Отменен') 
+                                            background-color: #dc3545 !important; color: white !important;
+                                        @else 
+                                            background-color: #6c757d !important; color: white !important;
+                                        @endif
+                                        font-weight: 600; padding: 8px 12px; border-radius: 6px;">
+                                        {{ $order->status }}
+                                    </span>
+                                </td>
                                 <td>{{ $order->created_at->format('d.m.Y H:i') }}</td>
                                 <td>
-                                @if($order->orderItems && $order->orderItems->count() > 0)
-                                    <ul class="list-unstyled">
-                                        @foreach ($order->orderItems as $item)
-                                            <li>{{ $item->product->name_product }} - {{ $item->quantity }} шт. ({{ $item->price }} ₽)</li>
-                                        @endforeach
-                                    </ul>
+                                    @if($order->orderItems && $order->orderItems->count() > 0)
+                                        <ul class="list-unstyled">
+                                            @foreach ($order->orderItems as $item)
+                                                <li>{{ $item->product->name_product }} - {{ $item->quantity }} шт. ({{ $item->price }} ₽)</li>
+                                            @endforeach
+                                        </ul>
                                     @else
-                                    <p>Нет данных о составе заказа</p>
+                                        <p>Нет данных о составе заказа</p>
                                     @endif
                                 </td>
                                 <td>
-                                    <form action="{{ route('admin.orders.confirm', $order) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('PATCH')
-                                        <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Подтвердить заказ?')">Подтвердить</button>
-                                    </form>
+                                    <!-- Добавил выпадающий список для изменения статуса -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
+                                                type="button" data-bs-toggle="dropdown">
+                                            Изменить статус
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            @foreach(['В обработке', 'Подтвержден', 'Готовится', 'Готов к выдаче', 'Выдан', 'Отменен'] as $status)
+                                                @if($status !== $order->status)
+                                                    <li>
+                                                        <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <input type="hidden" name="status" value="{{ $status }}">
+                                                            <button type="submit" class="dropdown-item">{{ $status }}</button>
+                                                        </form>
+                                                    </li>
+                                                @endif
+                                            @endforeach
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
+
+            <!-- Заменил стандартную пагинацию на кастомную с русским языком -->
+            @if($orders->hasPages())
+                <div class="mt-4">
+                    {{ $orders->appends(request()->query())->links('custom.pagination') }}
+                </div>
+            @endif
         </div>
     </div>
 </div>

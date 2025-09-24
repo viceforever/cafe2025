@@ -74,14 +74,19 @@
                             <h5 class="mb-0">Адрес доставки</h5>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
+                            <div class="mb-3 position-relative">
                                 <label for="delivery_address" class="form-label">Адрес</label>
                                 <input type="text" class="form-control @error('delivery_address') is-invalid @enderror" 
                                        id="delivery_address" name="delivery_address" value="{{ old('delivery_address') }}" 
-                                       placeholder="Укажите адрес доставки">
+                                       placeholder="Начните вводить адрес..." autocomplete="off">
+                                <div id="address-suggestions" class="position-absolute w-100 bg-white border border-top-0 rounded-bottom shadow-sm" style="display: none; z-index: 1000; max-height: 300px; overflow-y: auto;"></div>
                                 @error('delivery_address')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+                                <small class="form-text text-muted">
+                                    <i class="iconify me-1" data-icon="mdi:information-outline"></i>
+                                    Начните вводить адрес, и мы предложим варианты
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -155,6 +160,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const pickupRadio = document.getElementById('pickup');
     const addressCard = document.getElementById('delivery-address-card');
     const addressInput = document.getElementById('delivery_address');
+    const suggestionsContainer = document.getElementById('address-suggestions');
+
+    let debounceTimer;
+    let currentSuggestions = [];
+    let selectedIndex = -1;
+
+    console.log('[v0] DaData autocomplete initialized');
+    console.log('[v0] CSRF token:', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
 
     function toggleAddressCard() {
         if (deliveryRadio.checked) {
@@ -163,7 +176,173 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             addressCard.style.display = 'none';
             addressInput.required = false;
+            addressInput.value = '';
+            hideSuggestions();
         }
+    }
+
+    function showSuggestions() {
+        suggestionsContainer.style.display = 'block';
+    }
+
+    function hideSuggestions() {
+        suggestionsContainer.style.display = 'none';
+        selectedIndex = -1;
+    }
+
+    function renderSuggestions(suggestions) {
+        console.log('[v0] Rendering suggestions:', suggestions.length);
+        
+        if (suggestions.length === 0) {
+            hideSuggestions();
+            return;
+        }
+
+        currentSuggestions = suggestions;
+        let html = '';
+        
+        suggestions.forEach((suggestion, index) => {
+            html += `
+                <div class="suggestion-item p-2 border-bottom cursor-pointer" data-index="${index}" style="cursor: pointer;">
+                    <div class="fw-medium">${suggestion.value}</div>
+                    ${suggestion.data.postal_code ? `<small class="text-muted">${suggestion.data.postal_code}</small>` : ''}
+                </div>
+            `;
+        });
+
+        suggestionsContainer.innerHTML = html;
+        showSuggestions();
+
+        // Добавляем обработчики кликов на подсказки
+        suggestionsContainer.querySelectorAll('.suggestion-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const index = parseInt(this.dataset.index);
+                const suggestion = currentSuggestions[index];
+                addressInput.value = suggestion.value;
+                hideSuggestions();
+                console.log('[v0] Address selected:', suggestion.value);
+            });
+
+            // Добавляем эффект hover
+            item.addEventListener('mouseenter', function() {
+                // Убираем выделение с других элементов
+                suggestionsContainer.querySelectorAll('.suggestion-item').forEach(el => {
+                    el.style.backgroundColor = '';
+                });
+                this.style.backgroundColor = '#f8f9fa';
+                selectedIndex = parseInt(this.dataset.index);
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+    }
+
+    async function fetchAddressSuggestions(query) {
+        console.log('[v0] Fetching suggestions for:', query);
+        
+        if (query.length < 3) {
+            console.log('[v0] Query too short, hiding suggestions');
+            hideSuggestions();
+            return;
+        }
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            if (!csrfToken) {
+                console.error('[v0] CSRF token not found');
+                return;
+            }
+
+            console.log('[v0] Making request to /api/address/suggest');
+            
+            const response = await fetch('/api/address/suggest', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({
+                    query: query,
+                    count: 8
+                })
+            });
+
+            console.log('[v0] Response status:', response.status);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('[v0] Response data:', data);
+                
+                if (data.success && data.suggestions) {
+                    renderSuggestions(data.suggestions);
+                } else {
+                    console.log('[v0] No suggestions in response');
+                    hideSuggestions();
+                }
+            } else {
+                const errorText = await response.text();
+                console.error('[v0] API error:', response.status, errorText);
+                hideSuggestions();
+            }
+        } catch (error) {
+            console.error('[v0] Request error:', error);
+            hideSuggestions();
+        }
+    }
+
+    addressInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        console.log('[v0] Input changed:', query);
+        
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            fetchAddressSuggestions(query);
+        }, 300);
+    });
+
+    // Скрываем подсказки при клике вне поля
+    document.addEventListener('click', function(e) {
+        if (!addressInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+            hideSuggestions();
+        }
+    });
+
+    addressInput.addEventListener('keydown', function(e) {
+        const suggestions = suggestionsContainer.querySelectorAll('.suggestion-item');
+        
+        if (suggestions.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = selectedIndex < suggestions.length - 1 ? selectedIndex + 1 : 0;
+            updateSelection(suggestions);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : suggestions.length - 1;
+            updateSelection(suggestions);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            const suggestion = currentSuggestions[selectedIndex];
+            addressInput.value = suggestion.value;
+            hideSuggestions();
+            console.log('[v0] Address selected via keyboard:', suggestion.value);
+        } else if (e.key === 'Escape') {
+            hideSuggestions();
+        }
+    });
+
+    function updateSelection(suggestions) {
+        suggestions.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.style.backgroundColor = '#f8f9fa';
+            } else {
+                item.style.backgroundColor = '';
+            }
+        });
     }
 
     deliveryRadio.addEventListener('change', toggleAddressCard);
@@ -171,6 +350,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Проверяем при загрузке страницы
     toggleAddressCard();
+
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+        const deliveryMethod = document.querySelector('input[name="delivery_method"]:checked');
+        const phone = document.getElementById('phone');
+
+        if (!paymentMethod) {
+            e.preventDefault();
+            alert('Пожалуйста, выберите способ оплаты');
+            return false;
+        }
+
+        if (!deliveryMethod) {
+            e.preventDefault();
+            alert('Пожалуйста, выберите способ получения');
+            return false;
+        }
+
+        if (!phone.value.trim()) {
+            e.preventDefault();
+            alert('Пожалуйста, укажите номер телефона');
+            phone.focus();
+            return false;
+        }
+
+        if (deliveryMethod.value === 'delivery' && !addressInput.value.trim()) {
+            e.preventDefault();
+            alert('Пожалуйста, укажите адрес доставки');
+            addressInput.focus();
+            return false;
+        }
+    });
 });
 </script>
 @endsection

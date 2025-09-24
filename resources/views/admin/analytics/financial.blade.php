@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container" style="padding-top: 220px;">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -53,7 +53,14 @@
                                     <tbody>
                                         @forelse($monthlyRevenue as $month)
                                             <tr>
-                                                <td>{{ \Carbon\Carbon::create($month->year, $month->month)->format('F Y') }}</td>
+                                                @php
+                                                    $monthNames = [
+                                                        1 => 'Январь', 2 => 'Февраль', 3 => 'Март', 4 => 'Апрель',
+                                                        5 => 'Май', 6 => 'Июнь', 7 => 'Июль', 8 => 'Август',
+                                                        9 => 'Сентябрь', 10 => 'Октябрь', 11 => 'Ноябрь', 12 => 'Декабрь'
+                                                    ];
+                                                @endphp
+                                                <td>{{ $monthNames[$month->month] }} {{ $month->year }}</td>
                                                 <td>{{ number_format($month->revenue, 0) }} ₽</td>
                                             </tr>
                                         @empty
@@ -116,11 +123,11 @@
                             <p class="text-muted">Маржа прибыли</p>
                         </div>
                         <div class="col-md-4">
-                            <h3 class="text-success">{{ number_format($costBreakdown->sum('cost'), 0) }} ₽</h3>
+                            <h3 class="text-dark">{{ number_format($costBreakdown->sum('cost'), 0) }} ₽</h3>
                             <p class="text-muted">Общие затраты</p>
                         </div>
                         <div class="col-md-4">
-                            <h3 class="text-info">{{ number_format($costBreakdown->count()) }}</h3>
+                            <h3 class="text-dark">{{ number_format($costBreakdown->count()) }}</h3>
                             <p class="text-muted">Используемых ингредиентов</p>
                         </div>
                     </div>

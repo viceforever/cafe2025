@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Shift; // добавил импорт модели Shift
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,16 +24,21 @@ class CheckoutController extends Controller
     public function process(Request $request)
     {
         // Валидация данных
-        $request->validate([
+        $validationRules = [
             'payment_method' => 'required|in:cash,card',
             'delivery_method' => 'required|in:pickup,delivery',
-            'delivery_address' => 'required_if:delivery_method,delivery|string|max:255',
             'phone' => 'required|string|max:20',
             'notes' => 'nullable|string|max:500',
-        ], [
+        ];
+
+        if ($request->delivery_method === 'delivery') {
+            $validationRules['delivery_address'] = 'required|string|max:255';
+        }
+
+        $request->validate($validationRules, [
             'payment_method.required' => 'Выберите способ оплаты',
             'delivery_method.required' => 'Выберите способ получения',
-            'delivery_address.required_if' => 'Укажите адрес доставки',
+            'delivery_address.required' => 'Укажите адрес доставки',
             'phone.required' => 'Укажите номер телефона',
         ]);
 
@@ -42,11 +48,35 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Ваша корзина пуста');
         }
 
+        $unavailableProducts = [];
+        foreach ($cart as $id => $item) {
+            $product = Product::with('ingredients')->find($id);
+            if ($product) {
+                // Проверяем, можем ли мы приготовить нужное количество товара
+                for ($i = 0; $i < $item['quantity']; $i++) {
+                    if (!$product->isAvailable()) {
+                        $unavailableProducts[] = $product->name_product;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!empty($unavailableProducts)) {
+            $errorMessage = 'К сожалению, следующие блюда временно недоступны из-за нехватки ингредиентов: ' . implode(', ', array_unique($unavailableProducts));
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $errorMessage);
+        }
+
         DB::beginTransaction();
         try {
+            $activeShift = Shift::where('status', 'active')->first();
+            
             // Создаем новый заказ
             $order = new Order();
             $order->user_id = Auth::id();
+            $order->shift_id = $activeShift ? $activeShift->id : null; // привязываем к активной смене
             $order->total_amount = $this->calculateTotal($cart);
             $order->status = 'В обработке';
             $order->payment_method = $request->payment_method;

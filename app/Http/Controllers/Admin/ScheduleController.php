@@ -124,6 +124,32 @@ class ScheduleController extends Controller
                         ->with('success', 'График работы удален');
     }
 
+    public function list(Request $request)
+    {
+        $query = Schedule::with(['user', 'creator'])
+                        ->orderBy('date', 'desc')
+                        ->orderBy('start_time', 'asc');
+
+        // Фильтрация по сотруднику
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        // Фильтрация по дате
+        if ($request->filled('date_from')) {
+            $query->where('date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('date', '<=', $request->date_to);
+        }
+
+        $schedules = $query->paginate(15);
+        $employees = User::whereIn('role', ['manager', 'admin'])->get();
+
+        return view('admin.schedules.list', compact('schedules', 'employees'));
+    }
+
     public function bulkCreate(Request $request)
     {
         $employees = User::whereIn('role', ['manager', 'admin'])->get();

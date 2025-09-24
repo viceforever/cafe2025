@@ -1,12 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container" style="padding-top: 220px;">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Аналитика и статистика</h2>
-                <div class="btn-group" role="group">
+                <!-- увеличил отступы между кнопками с gap-2 до gap-3 -->
+                <div class="d-flex gap-3" role="group">
                     <a href="{{ route('admin.analytics.products') }}" class="btn btn-outline-primary">Товары</a>
                     <a href="{{ route('admin.analytics.ingredients') }}" class="btn btn-outline-success">Ингредиенты</a>
                     <a href="{{ route('admin.analytics.financial') }}" class="btn btn-outline-info">Финансы</a>
@@ -54,6 +55,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
+                    <!-- восстановил оригинальный цвет заказов с bg-dark на bg-success -->
                     <div class="card bg-success text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
@@ -69,6 +71,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
+                    <!-- восстановил оригинальный цвет среднего чека с bg-secondary на bg-info -->
                     <div class="card bg-info text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
@@ -84,6 +87,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
+                    <!-- восстановил оригинальное условие для прибыли с bg-dark на bg-success -->
                     <div class="card bg-{{ $profit >= 0 ? 'success' : 'danger' }} text-white">
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
@@ -172,11 +176,13 @@
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span>{{ $stat->delivery_method === 'pickup' ? 'Самовывоз' : 'Доставка' }}</span>
                                     <div>
+                                        <!-- восстановил оригинальный цвет способов получения с bg-dark на bg-success -->
                                         <span class="badge bg-success">{{ $stat->count }} заказов</span>
                                         <span class="fw-bold">{{ number_format($stat->total, 0) }} ₽</span>
                                     </div>
                                 </div>
                                 <div class="progress mb-3" style="height: 8px;">
+                                    <!-- восстановил оригинальный цвет прогресс-бара с bg-dark на bg-success -->
                                     <div class="progress-bar bg-success" style="width: {{ ($stat->total / $totalRevenue) * 100 }}%"></div>
                                 </div>
                             @empty

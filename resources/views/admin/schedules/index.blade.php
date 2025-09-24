@@ -1,15 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container" style="padding-top: 220px;">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Управление графиками работы</h2>
                 <div>
-                    <a href="{{ route('admin.schedules.bulk-create', ['start_date' => $currentWeek]) }}" 
-                       class="btn btn-info me-2">
-                        <i class="iconify" data-icon="mdi:calendar-multiple"></i> Массовое создание
+                    <!-- добавляем кнопку для просмотра всех графиков -->
+                    <a href="{{ route('admin.schedules.list') }}" class="btn btn-info me-2">
+                        <i class="iconify" data-icon="mdi:calendar-clock"></i> Все графики
                     </a>
                     <a href="{{ route('admin.schedules.create') }}" class="btn btn-primary">
                         <i class="iconify" data-icon="mdi:plus"></i> Добавить график
@@ -59,7 +59,18 @@
                                     <th>Сотрудник</th>
                                     @foreach($weekDays as $day)
                                         <th class="text-center {{ $day->isToday() ? 'bg-primary text-white' : '' }}">
-                                            {{ $day->format('D') }}<br>
+                                            @php
+                                                $dayNames = [
+                                                    'Mon' => 'Пн',
+                                                    'Tue' => 'Вт', 
+                                                    'Wed' => 'Ср',
+                                                    'Thu' => 'Чт',
+                                                    'Fri' => 'Пт',
+                                                    'Sat' => 'Сб',
+                                                    'Sun' => 'Вс'
+                                                ];
+                                            @endphp
+                                            {{ $dayNames[$day->format('D')] }}<br>
                                             <small>{{ $day->format('d.m') }}</small>
                                         </th>
                                     @endforeach

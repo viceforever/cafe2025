@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container" style="padding-top: 220px;">
     <div class="row">
         <div class="col-md-12">
             <h2 class="mb-4">История смен</h2>
@@ -25,10 +25,23 @@
                             <tbody>
                                 @forelse($shifts as $shift)
                                     <tr>
-                                        <td>{{ $shift->start_time->format('d.m.Y') }}</td>
-                                        <td>{{ $shift->start_time->format('H:i') }}</td>
-                                        <td>{{ $shift->end_time ? $shift->end_time->format('H:i') : '-' }}</td>
-                                        <td>{{ $shift->duration ?? 'В процессе' }}</td>
+                                        <!-- выводим время напрямую из БД как строку без преобразований -->
+                                        <td>{{ date('d.m.Y', strtotime($shift->start_time)) }}</td>
+                                        <td>{{ date('H:i', strtotime($shift->start_time)) }}</td>
+                                        <td>
+                                            @if($shift->end_time)
+                                                {{ date('H:i', strtotime($shift->end_time)) }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($shift->start_time && $shift->end_time)
+                                                {{ $shift->duration }}
+                                            @else
+                                                В процессе
+                                            @endif
+                                        </td>
                                         <td>{{ $shift->total_orders }}</td>
                                         <td>{{ number_format($shift->total_revenue, 2) }} ₽</td>
                                         <td>
@@ -52,7 +65,8 @@
                         </table>
                     </div>
                     
-                    {{ $shifts->links() }}
+                    {{-- заменил стандартную пагинацию на кастомную русскую --}}
+                    {{ $shifts->links('custom.pagination') }}
                 </div>
             </div>
         </div>
