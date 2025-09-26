@@ -99,51 +99,60 @@
 
             <div class="d-flex align-items-center">
               @if(Auth::check())
-                <a class="nav-link me-3" href="{{ route('profile.show') }}">
-                  <iconify-icon icon="mdi:account" class="fs-4"></iconify-icon>
-                </a>
-                <a class="nav-link me-3" href="{{ route('cart.index') }}">
-                  <iconify-icon icon="mdi:cart" class="fs-4"></iconify-icon>
-                </a> 
-
-                <!-- Обновленное меню для разных ролей -->
-                @if(Auth::user() && Auth::user()->isAdmin())
-                  <li style="list-style: none;" class="nav-item dropdown">
-                    <a class="nav-link me-3" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Админ панель
+                <ul class="navbar-nav d-flex flex-row align-items-center mb-0">
+                  <li class="nav-item">
+                    <a class="nav-link me-3" href="{{ route('profile.show') }}">
+                      <iconify-icon icon="mdi:account" class="fs-4"></iconify-icon>
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="adminDropdown">
-                        <li><a class="dropdown-item" href="{{ route('admin.products.index') }}">Управление товарами</a></li>
-                        <li><a class="dropdown-item" href="{{ route('admin.categories.index') }}">Управление категориями</a></li>
-                        <li><a class="dropdown-item" href="{{ route('admin.orders.index') }}">Управление заказами</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ route('admin.users.index') }}">Управление пользователями</a></li>
-                        <li><a class="dropdown-item" href="{{ route('admin.ingredients.index') }}">Управление ингредиентами</a></li>
-                        <li><a class="dropdown-item" href="{{ route('admin.schedules.index') }}">Графики работы</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ route('admin.analytics.index') }}">Аналитика</a></li>
-                    </ul>
                   </li>
-                @elseif(Auth::user() && Auth::user()->isManager())
-                  <li style="list-style: none;" class="nav-item dropdown">
-                    <a class="nav-link me-3" href="#" id="managerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Панель менеджера
+                  <li class="nav-item">
+                    <a class="nav-link me-3" href="{{ route('cart.index') }}">
+                      <iconify-icon icon="mdi:cart" class="fs-4"></iconify-icon>
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="managerDropdown">
-                        <li><a class="dropdown-item" href="{{ route('manager.dashboard') }}">Главная</a></li>
-                        <li><a class="dropdown-item" href="{{ route('manager.orders') }}">Управление заказами</a></li>
-                        <li><a class="dropdown-item" href="{{ route('manager.ingredients') }}">Остатки ингредиентов</a></li>
-                        <li><a class="dropdown-item" href="{{ route('manager.products.availability') }}">Наличие блюд</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{{ route('manager.shifts.index') }}">Мои смены</a></li>
-                        <li><a class="dropdown-item" href="{{ route('employee.schedule.index') }}">Мой график</a></li>
-                    </ul>
                   </li>
-                @endif
 
-                <a class="nav-link me-3" href="#" id="logoutLink" role="button" aria-expanded="false">
-                    Выход
-                </a>
+                  <!-- Обновленное меню для разных ролей -->
+                  @if(Auth::user() && Auth::user()->isAdmin())
+                    <li class="nav-item dropdown">
+                      <a class="nav-link me-3 dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          Админ панель
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                          <li><a class="dropdown-item" href="{{ route('admin.products.index') }}">Управление товарами</a></li>
+                          <li><a class="dropdown-item" href="{{ route('admin.categories.index') }}">Управление категориями</a></li>
+                          <li><a class="dropdown-item" href="{{ route('admin.orders.index') }}">Управление заказами</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="{{ route('admin.users.index') }}">Управление пользователями</a></li>
+                          <li><a class="dropdown-item" href="{{ route('admin.ingredients.index') }}">Управление ингредиентами</a></li>
+                          <li><a class="dropdown-item" href="{{ route('admin.schedules.index') }}">Графики работы</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="{{ route('admin.analytics.index') }}">Аналитика</a></li>
+                          <li><a class="dropdown-item" href="{{ route('admin.reports.index') }}">Отчеты</a></li>
+                      </ul>
+                    </li>
+                  @elseif(Auth::user() && Auth::user()->isManager())
+                    <li class="nav-item dropdown">
+                      <a class="nav-link me-3 dropdown-toggle" href="#" id="managerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                          Панель менеджера
+                      </a>
+                      <ul class="dropdown-menu" aria-labelledby="managerDropdown">
+                          <li><a class="dropdown-item" href="{{ route('manager.dashboard') }}">Главная</a></li>
+                          <li><a class="dropdown-item" href="{{ route('manager.orders') }}">Управление заказами</a></li>
+                          <li><a class="dropdown-item" href="{{ route('manager.ingredients') }}">Остатки ингредиентов</a></li>
+                          <li><a class="dropdown-item" href="{{ route('manager.products.availability') }}">Наличие блюд</a></li>
+                          <li><hr class="dropdown-divider"></li>
+                          <li><a class="dropdown-item" href="{{ route('manager.shifts.index') }}">Мои смены</a></li>
+                          <li><a class="dropdown-item" href="{{ route('employee.schedule.index') }}">Мой график</a></li>
+                      </ul>
+                    </li>
+                  @endif
+
+                  <li class="nav-item">
+                    <a class="nav-link me-3" href="#" id="logoutLink" role="button" aria-expanded="false">
+                        Выход
+                    </a>
+                  </li>
+                </ul>
               @else
                 <div class="d-flex align-items-center">
                     <a class="nav-link me-3" href="login">Вход</a>
@@ -170,8 +179,8 @@
         <div class="col-md-6 copyright">
           <p class="secondary-font">© 2024 Курсовая </p>
         </div>
-        <a class="nav-link me-3" href="/help" class="nav-link">Помощь</a>
         <div class="col-md-6 text-md-end">
+          <a class="nav-link me-3" href="/help">Помощь</a>
         </div>
       </div>
     </div>
@@ -180,12 +189,20 @@
   <!-- ... existing scripts ... -->
   <script src="{{ asset('js/jquery-1.11.0.min.js') }}"></script>
   <script src="{{ asset('js/swiper.js') }}"></script>
-  <script src="{{ asset('js/bootstrap.bundle.js') }}"></script>
   <script src="{{ asset('js/plugins.js') }}"></script>
   <script src="{{ asset('js/script.js') }}"></script>
   <script src="{{ asset('js/iconify.js') }}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация всех dropdown элементов
+    var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+    var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+        return new bootstrap.Dropdown(dropdownToggleEl);
+    });
+    
+    console.log('[v0] Bootstrap dropdowns initialized:', dropdownList.length);
+});
+
 document.getElementById('logoutLink').addEventListener('click', function(e) {
     e.preventDefault();
     var form = document.createElement('form');

@@ -10,11 +10,13 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\MainController;
+use App\Http\Controllers\DaDataController;
 
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\IngredientController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\ReportsController;
 use App\Http\Controllers\Manager\ManagerController;
 use App\Http\Controllers\Manager\ShiftController;
 use App\Http\Controllers\Employee\ScheduleController as EmployeeScheduleController;
@@ -58,12 +60,15 @@ Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':manager,admin'
     Route::get('/dashboard', [ManagerController::class, 'dashboard'])->name('dashboard');
     Route::get('/orders', [ManagerController::class, 'orders'])->name('orders');
     Route::patch('/orders/{order}/status', [ManagerController::class, 'updateOrderStatus'])->name('orders.update-status');
+    Route::patch('/orders/{order}/confirm', [ManagerController::class, 'confirmOrder'])->name('orders.confirm');
+    Route::patch('/orders/{order}/cancel', [ManagerController::class, 'cancelOrder'])->name('orders.cancel');
     Route::get('/ingredients', [ManagerController::class, 'ingredients'])->name('ingredients');
     Route::get('/products/availability', [ManagerController::class, 'checkProductAvailability'])->name('products.availability');
     
     // Управление сменами
     Route::post('/shift/start', [ManagerController::class, 'startShift'])->name('shift.start');
     Route::post('/shift/end', [ManagerController::class, 'endShift'])->name('shift.end');
+    Route::get('/shift/stats', [ManagerController::class, 'getShiftStats'])->name('shift.stats');
     Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
     Route::get('/shifts/{shift}', [ShiftController::class, 'show'])->name('shifts.show');
 });
@@ -93,6 +98,8 @@ Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':admin'])->pref
     // Управление заказами
     Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::patch('/orders/{order}/confirm', [AdminOrderController::class, 'confirm'])->name('orders.confirm');
+    Route::patch('/orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->name('orders.cancel');
+    Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
 
     Route::resource('users', EmployeeController::class);
     Route::patch('/users/{user}/role', [EmployeeController::class, 'updateRole'])->name('users.update-role');
@@ -102,6 +109,7 @@ Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':admin'])->pref
     Route::get('/ingredients-all', [IngredientController::class, 'getAll'])->name('ingredients.get-all');
 
     Route::resource('schedules', ScheduleController::class);
+    Route::get('/schedules-list', [ScheduleController::class, 'list'])->name('schedules.list');
     Route::get('/schedules-bulk/create', [ScheduleController::class, 'bulkCreate'])->name('schedules.bulk-create');
     Route::post('/schedules-bulk', [ScheduleController::class, 'bulkStore'])->name('schedules.bulk-store');
 
@@ -109,6 +117,12 @@ Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':admin'])->pref
     Route::get('/analytics/products', [AnalyticsController::class, 'products'])->name('analytics.products');
     Route::get('/analytics/ingredients', [AnalyticsController::class, 'ingredients'])->name('analytics.ingredients');
     Route::get('/analytics/financial', [AnalyticsController::class, 'financial'])->name('analytics.financial');
+
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
+    Route::get('/reports/sales', [ReportsController::class, 'salesReport'])->name('reports.sales');
+    Route::get('/reports/ingredients', [ReportsController::class, 'ingredientsReport'])->name('reports.ingredients');
+    Route::get('/reports/sales/export/{format}', [ReportsController::class, 'exportSalesReport'])->name('reports.sales.export');
+    Route::get('/reports/ingredients/export/{format}', [ReportsController::class, 'exportIngredientsReport'])->name('reports.ingredients.export');
 
     // Маршрут для загружаемой картинки
     Route::get('/images/{filename}', function ($filename) {

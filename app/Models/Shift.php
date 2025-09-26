@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class Shift extends Model
 {
@@ -23,8 +25,6 @@ class Shift extends Model
     ];
 
     protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
         'total_revenue' => 'decimal:2',
         'cash_sales' => 'decimal:2',
         'card_sales' => 'decimal:2',
@@ -43,7 +43,18 @@ class Shift extends Model
     public function getDurationAttribute()
     {
         if ($this->start_time && $this->end_time) {
-            return $this->start_time->diffForHumans($this->end_time, true);
+            $start = Carbon::parse($this->start_time);
+            $end = Carbon::parse($this->end_time);
+            
+            $diffInMinutes = $start->diffInMinutes($end);
+            $hours = intval($diffInMinutes / 60);
+            $minutes = $diffInMinutes % 60;
+            
+            if ($hours > 0) {
+                return $hours . ' ч ' . $minutes . ' мин';
+            } else {
+                return $minutes . ' мин';
+            }
         }
         return null;
     }
@@ -55,14 +66,30 @@ class Shift extends Model
 
     public function calculateStats()
     {
-        $orders = Order::where('created_at', '>=', $this->start_time)
-                      ->where('created_at', '<=', $this->end_time ?? now())
-                      ->get();
+        $orders = $this->orders()->get();
 
-        $this->total_orders = $orders->count();
-        $this->total_revenue = $orders->sum('total_amount');
-        $this->cash_sales = $orders->where('payment_method', 'cash')->sum('total_amount');
-        $this->card_sales = $orders->where('payment_method', 'card')->sum('total_amount');
-        $this->save();
+        DB::table('shifts')
+            ->where('id', $this->id)
+            ->update([
+                'total_orders' => $orders->count(),
+                'total_revenue' => $orders->where('payment_method', 'cash')->sum('total_amount') + $orders->where('payment_method', 'card')->sum('total_amount'),
+                'cash_sales' => $orders->where('payment_method', 'cash')->sum('total_amount'),
+                'card_sales' => $orders->where('payment_method', 'card')->sum('total_amount')
+            ]);
+    }
+
+    public function endShift($endTime, $notes = null)
+    {
+        DB::table('shifts')
+            ->where('id', $this->id)
+            ->update([
+                'end_time' => $endTime,
+                'status' => 'completed',
+                'notes' => $notes,
+                'updated_at' => now()
+            ]);
+        
+        $this->refresh();
+        return $this;
     }
 }

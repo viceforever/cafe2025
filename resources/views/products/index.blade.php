@@ -2,7 +2,7 @@
 @section('title') Главная страница @endsection
 @section('main_content')
 <section id="banner" style="background: #F9F3EC;">
-    <div class="container">
+    <div class="container" style="padding-top: 220px;">
       <div class="swiper main-swiper">
         <div class="swiper-wrapper">
           <div class="swiper-slide py-5">
@@ -98,6 +98,63 @@
     @endif
 @endforeach
 @endif
+
+<!-- Добавляем секцию с картой между каталогом товаров и отзывами -->
+<section id="location" class="my-5" style="background: #F9F3EC;">
+    <div class="container my-5 py-5">
+        <div class="section-header text-center mb-5">
+            <h2 class="display-3 fw-normal">Наше <span class="text-primary">расположение</span></h2>
+            <p class="fs-5 text-muted mt-3">Найдите нас на карте и приходите в гости!</p>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="map-container" style="border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                    <iframe 
+                        id="map_764036322" 
+                        frameborder="0" 
+                        width="100%" 
+                        height="600px" 
+                        src="https://makemap.2gis.ru/widget?data=eJw1j09Pg0AQxb_LeJSY3eVPgaQHpbHWNIb2UtH0QMoU12xZsmyplPS7O4DOaTK_Ny_v9aBNgQaLJeoTWiOxgfizB9vVCDE8Y27PBsGB2ugajR15DwettCF-dzxGR8aIW2nV8EFrgc3ByNpKXdEhfXm8Z6_XrewWm7ZILix737Q2YWz9vWnflk8sC0uWrbdltExWC1anSXRJy_mcjK6rqsAfiDn7n5sD5RS0G2L8pUy1rCzpD5rKyCq3YwnOvAcRch45vqDFFcLf078sIA6Fe9s7cMrrVDdyCtqDyi3Eo5YHIQtc4YazKHBADXhy86KZyz3Pd7kgcNX6RMQnV2qsldp9IaqP8WrNGW-__2ZrIg" 
+                        sandbox="allow-modals allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation-by-user-activation"
+                        style="border: none;">
+                    </iframe>
+                </div>
+                <div class="text-center mt-4">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <iconify-icon icon="mdi:map-marker" class="text-primary fs-4 me-2"></iconify-icon>
+                                <div>
+                                    <h6 class="mb-0">Адрес</h6>
+                                    <small class="text-muted">г. Иркутск, ул. Ленина, 5А</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <iconify-icon icon="mdi:clock-outline" class="text-primary fs-4 me-2"></iconify-icon>
+                                <div>
+                                    <h6 class="mb-0">Режим работы</h6>
+                                    <small class="text-muted">Ежедневно 10:00 - 22:00</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <iconify-icon icon="mdi:phone" class="text-primary fs-4 me-2"></iconify-icon>
+                                <div>
+                                    <h6 class="mb-0">Телефон</h6>
+                                    <small class="text-muted">+7 (950) 123-45-67</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
   <section id="testimonial">
     <div class="container my-5 py-5">
       <div class="row">
@@ -154,4 +211,3 @@
     </script>
   </section>
 @endsection
-

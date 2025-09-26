@@ -45,4 +45,11 @@ class Product extends Model
             $ingredient->reduceQuantity($ingredient->pivot->quantity_needed);
         }
     }
+
+    public function restoreIngredients()
+    {
+        foreach ($this->ingredients as $ingredient) {
+            $ingredient->restoreQuantity($ingredient->pivot->quantity_needed);
+        }
+    }
 }

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container" style="padding-top: 220px;">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,10 +16,18 @@
                             <h5>Информация о смене</h5>
                         </div>
                         <div class="card-body">
-                            <p><strong>Дата:</strong> {{ $shift->start_time->format('d.m.Y') }}</p>
-                            <p><strong>Время начала:</strong> {{ $shift->start_time->format('H:i') }}</p>
-                            <p><strong>Время окончания:</strong> {{ $shift->end_time ? $shift->end_time->format('H:i') : 'В процессе' }}</p>
+                            <!-- выводим время напрямую из БД как строку без преобразований -->
+                            <p><strong>Дата:</strong> {{ date('d.m.Y', strtotime($shift->start_time)) }}</p>
+                            <p><strong>Время начала:</strong> {{ date('H:i', strtotime($shift->start_time)) }}</p>
+                            <p><strong>Время окончания:</strong> 
+                                @if($shift->end_time)
+                                    {{ date('H:i', strtotime($shift->end_time)) }}
+                                @else
+                                    В процессе
+                                @endif
+                            </p>
                             <p><strong>Длительность:</strong> {{ $shift->duration ?? 'В процессе' }}</p>
+                            
                             <p><strong>Статус:</strong> 
                                 <span class="badge bg-{{ $shift->isActive() ? 'success' : 'secondary' }}">
                                     {{ $shift->isActive() ? 'Активна' : 'Завершена' }}
@@ -32,6 +40,7 @@
                         </div>
                     </div>
                 </div>
+                
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header">
@@ -49,6 +58,7 @@
                     </div>
                 </div>
             </div>
+            
 
             @if($orders->count() > 0)
                 <div class="card">
@@ -72,7 +82,8 @@
                                     @foreach($orders as $order)
                                         <tr>
                                             <td>#{{ $order->id }}</td>
-                                            <td>{{ $order->created_at->format('H:i') }}</td>
+                                            <!-- выводим время заказа напрямую из БД -->
+                                            <td>{{ date('H:i', strtotime($order->created_at)) }}</td>
                                             <td>{{ $order->total_amount }} ₽</td>
                                             <td>{{ $order->payment_method_text }}</td>
                                             <td>

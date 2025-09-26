@@ -67,7 +67,8 @@
                         </table>
                     </div>
                     
-                    {{ $employees->links() }}
+                    {{-- заменил стандартную пагинацию на кастомную русскую --}}
+                    {{ $employees->links('custom.pagination') }}
                 </div>
             </div>
         </div>

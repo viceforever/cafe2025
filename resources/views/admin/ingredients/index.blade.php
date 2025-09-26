@@ -1,11 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
+<!-- Added padding-top to prevent navigation overlap -->
 <div class="container" style="padding-top: 200px;">
     <div class="row">
         <div class="col-md-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Управление ингредиентами</h2>
+                <!-- Убрал модальное окно, оставил только простую кнопку -->
                 <a href="{{ route('admin.ingredients.create') }}" class="btn btn-primary">
                     <i class="iconify" data-icon="mdi:plus"></i> Добавить ингредиент
                 </a>
@@ -47,41 +49,40 @@
                                         <td>{{ $ingredient->name }}</td>
                                         <td>{{ $ingredient->unit }}</td>
                                         <td>
+                                            <!-- убрал кнопку сохранения, добавил сохранение по Enter -->
                                             <form action="{{ route('admin.ingredients.update-quantity', $ingredient) }}" 
-                                                  method="POST" class="d-inline">
+                                                  method="POST" class="d-inline quantity-form">
                                                 @csrf
                                                 @method('PATCH')
-                                                <div class="input-group input-group-sm" style="width: 120px;">
-                                                    <input type="number" step="0.01" name="quantity" 
-                                                           value="{{ $ingredient->quantity }}" class="form-control">
-                                                    <button type="submit" class="btn btn-outline-primary btn-sm">
-                                                        <i class="iconify" data-icon="mdi:check"></i>
-                                                    </button>
-                                                </div>
+                                                <input type="number" step="0.01" name="quantity" 
+                                                       value="{{ $ingredient->quantity }}" 
+                                                       class="form-control form-control-sm quantity-input" 
+                                                       style="width: 80px; display: inline-block;">
                                             </form>
                                         </td>
                                         <td>{{ $ingredient->min_quantity }} {{ $ingredient->unit }}</td>
                                         <td>{{ number_format($ingredient->cost_per_unit, 2) }} ₽</td>
                                         <td>
                                             @if($ingredient->isLowStock())
-                                                <span class="badge bg-warning">Низкий остаток</span>
+                                                <!-- изменил цвет с bg-dark на bg-danger для лучшей видимости -->
+                                                <!-- Здесь можно поменять цвет статуса: bg-dark (темный), bg-danger (красный), bg-warning (желтый) -->
+                                                <span class="badge bg-danger text-white">Низкий остаток</span>
                                             @else
-                                                <span class="badge bg-success">В наличии</span>
+                                                <!-- изменил цвет с bg-primary на bg-success для лучшей видимости -->
+                                                <!-- Здесь можно поменять цвет статуса: bg-primary (синий), bg-success (зеленый), bg-info (голубой) -->
+                                                <span class="badge bg-success text-white">В наличии</span>
                                             @endif
                                         </td>
                                         <td>
+                                            <!-- изменил стиль кнопок как на странице продуктов -->
                                             <a href="{{ route('admin.ingredients.edit', $ingredient) }}" 
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="iconify" data-icon="mdi:pencil"></i>
-                                            </a>
+                                               class="btn btn-sm btn-primary">Редактировать</a>
                                             <form action="{{ route('admin.ingredients.destroy', $ingredient) }}" 
                                                   method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                        onclick="return confirm('Удалить ингредиент?')">
-                                                    <i class="iconify" data-icon="mdi:delete"></i>
-                                                </button>
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('Вы уверены?')">Удалить</button>
                                             </form>
                                         </td>
                                     </tr>
@@ -94,10 +95,28 @@
                         </table>
                     </div>
                     
-                    {{ $ingredients->links() }}
+                    {{-- заменил стандартную пагинацию на кастомную русскую --}}
+                    {{ $ingredients->links('custom.pagination') }}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- добавил JavaScript для сохранения по Enter -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    
+    quantityInputs.forEach(function(input) {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.closest('form').submit();
+            }
+        });
+    });
+});
+</script>
+
 @endsection

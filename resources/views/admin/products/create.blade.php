@@ -64,13 +64,32 @@
 <script>
 let ingredientIndex = 0;
 let availableIngredients = [];
+let selectedIngredients = [];
 
-// Загружаем список ингредиентов
 fetch('{{ route("admin.ingredients.get-all") }}')
     .then(response => response.json())
     .then(data => {
         availableIngredients = data;
     });
+
+function updateAvailableIngredients() {
+    document.querySelectorAll('.ingredient-select').forEach(select => {
+        const currentValue = select.value;
+        const options = select.querySelectorAll('option');
+        
+        options.forEach(option => {
+            if (option.value === '') return;
+            
+            if (selectedIngredients.includes(option.value) && option.value !== currentValue) {
+                option.style.display = 'none';
+                option.disabled = true;
+            } else {
+                option.style.display = 'block';
+                option.disabled = false;
+            }
+        });
+    });
+}
 
 document.getElementById('add-ingredient').addEventListener('click', function() {
     const container = document.getElementById('ingredients-container');
@@ -101,14 +120,39 @@ document.getElementById('add-ingredient').addEventListener('click', function() {
     
     container.appendChild(ingredientRow);
     
-    // Добавляем обработчик для удаления
-    ingredientRow.querySelector('.remove-ingredient').addEventListener('click', function() {
-        ingredientRow.remove();
+    const ingredientSelect = ingredientRow.querySelector('.ingredient-select');
+    const quantityInput = ingredientRow.querySelector('.quantity-input');
+    
+    ingredientSelect.addEventListener('change', function() {
+        const oldValue = this.dataset.oldValue;
+        const newValue = this.value;
+        
+        if (oldValue) {
+            const index = selectedIngredients.indexOf(oldValue);
+            if (index > -1) {
+                selectedIngredients.splice(index, 1);
+            }
+        }
+        
+        if (newValue) {
+            selectedIngredients.push(newValue);
+        }
+        
+        this.dataset.oldValue = newValue;
+        updateAvailableIngredients();
     });
     
-    // Добавляем валидацию количества
-    const quantityInput = ingredientRow.querySelector('.quantity-input');
-    const ingredientSelect = ingredientRow.querySelector('.ingredient-select');
+    ingredientRow.querySelector('.remove-ingredient').addEventListener('click', function() {
+        const selectValue = ingredientSelect.value;
+        if (selectValue) {
+            const index = selectedIngredients.indexOf(selectValue);
+            if (index > -1) {
+                selectedIngredients.splice(index, 1);
+            }
+        }
+        ingredientRow.remove();
+        updateAvailableIngredients();
+    });
     
     quantityInput.addEventListener('input', function() {
         const selectedOption = ingredientSelect.selectedOptions[0];
@@ -123,6 +167,8 @@ document.getElementById('add-ingredient').addEventListener('click', function() {
             }
         }
     });
+    
+    updateAvailableIngredients();
     
     ingredientIndex++;
 });

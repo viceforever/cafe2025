@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Админ-панель')
+@section('title', 'Управление товарами')
 @section('main_content')
 <div class="container min-vh-100 d-flex flex-column">
     <div class="row flex-grow-1" style="margin-top: 220px; margin-bottom: 50px;">
         <div class="col-12">
-            <h1>Админ-панель</h1>
+            <h1>Управление товарами</h1>
             <a href="{{ route('admin.products.create') }}" class="btn btn-primary mb-3">Создать новый товар</a>
 
             @if (session('success'))

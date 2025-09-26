@@ -540,3 +540,53 @@ iconify-icon.pagination-arrow:hover {
     color: var(--light-color);
     background-color: var(--accent-color);
 }
+
+
+/* ИЗМЕНЕНИЕ ЦВЕТА bg-dark - замените #343a40 на нужный цвет */
+.bg-dark {
+  background-color: #2c3e50 !important; /* Темно-синий вместо стандартного серого */
+}
+
+/* ИЗМЕНЕНИЕ ЦВЕТА bg-primary - замените #007bff на нужный цвет */
+.bg-primary {
+  background-color:  #dead6f !important; /* Оранжевый цвет */
+}
+
+/* ИЗМЕНЕНИЕ ЦВЕТА bg-secondary - замените #6c757d на нужный цвет */
+.bg-secondary {
+  background-color: #34495e !important; /* Темно-серый */
+}
+
+/* ИЗМЕНЕНИЕ ЦВЕТА bg-success - замените #28a745 на нужный цвет */
+.bg-success {
+  background-color: #27ae60 !important; /* Зеленый */
+}
+
+/* ИЗМЕНЕНИЕ ЦВЕТА bg-info - замените #17a2b8 на нужный цвет */
+.bg-info {
+  background-color: #3498db !important; /* Голубой */
+}
+
+/* ИЗМЕНЕНИЕ ЦВЕТА bg-warning - замените #ffc107 на нужный цвет */
+.bg-warning {
+  background-color: #f39c12 !important; /* Оранжевый */
+}
+
+/* ИЗМЕНЕНИЕ ЦВЕТА bg-danger - замените #dc3545 на нужный цвет */
+.bg-danger {
+  background-color: #e74c3c !important; /* Красный */
+}
+
+/* Соответствующие цвета текста для контраста */
+.bg-dark,
+.bg-primary,
+.bg-secondary,
+.bg-success,
+.bg-info,
+.bg-danger {
+  color: white !important;
+}
+
+.bg-warning {
+  color: #2c3e50 !important; /* Темный текст на светлом фоне */
+}
