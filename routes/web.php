@@ -35,10 +35,6 @@ Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.s
 // Поиск товара
 Route::get('/search', [ProductController::class, 'search'])->name('products.search');
 
-Route::get('/test-dadata', function () {
-    return view('test-dadata');
-})->name('test.dadata');
-
 // Маршруты для добавления/удаления/обновления корзины
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
@@ -132,4 +128,18 @@ Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':admin'])->pref
     Route::get('/images/{filename}', function ($filename) {
         return response()->file(public_path('images/' . $filename));
     });
+});
+
+Route::prefix('api')->group(function () {
+    // Простейший тест без контроллера
+    Route::get('/test', function () {
+        return response()->json(['status' => 'success', 'message' => 'API работает!']);
+    });
+    
+    // Тесты DaData через контроллер
+    Route::get('/simple-test', [DaDataController::class, 'simpleTest']);
+    Route::get('/dadata-test-config', [DaDataController::class, 'testConfig']);
+    Route::get('/dadata-test-api', [DaDataController::class, 'testApi']);
+    
+    Route::get('/address-suggestions', [DaDataController::class, 'getAddressSuggestions']);
 });
