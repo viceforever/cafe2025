@@ -35,6 +35,10 @@ Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.s
 // Поиск товара
 Route::get('/search', [ProductController::class, 'search'])->name('products.search');
 
+Route::get('/test-dadata', function () {
+    return view('test-dadata');
+})->name('test.dadata');
+
 // Маршруты для добавления/удаления/обновления корзины
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');

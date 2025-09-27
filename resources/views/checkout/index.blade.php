@@ -185,9 +185,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const suggestionsContainer = document.getElementById('address-suggestions');
     let debounceTimer;
 
-    // Показать/скрыть поле адреса в зависимости от способа доставки
     function toggleAddressCard() {
-        if (deliveryRadio.checked) {
+        if (deliveryRadio && deliveryRadio.checked) {
             addressCard.style.display = 'block';
             addressInput.required = true;
         } else {
@@ -283,9 +282,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Обработчики изменения способа доставки
-    deliveryRadio.addEventListener('change', toggleAddressCard);
-    pickupRadio.addEventListener('change', toggleAddressCard);
+    if (deliveryRadio) {
+        deliveryRadio.addEventListener('change', toggleAddressCard);
+    }
+    if (pickupRadio) {
+        pickupRadio.addEventListener('change', toggleAddressCard);
+    }
 
     // Проверяем при загрузке страницы
     toggleAddressCard();
@@ -325,7 +327,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-{{-- Добавляю функцию для базового API теста --}}
 function testBasicApi() {
     console.log('[v0] Базовый API тест...');
     
@@ -340,10 +341,10 @@ function testBasicApi() {
             try {
                 const data = JSON.parse(text);
                 console.log('[v0] Результат базового API теста:', data);
-                showDebugResults('Базовый API тест успешен:\\n' + JSON.stringify(data, null, 2));
+                showDebugResults('Базовый API тест успешен:\n' + JSON.stringify(data, null, 2));
             } catch (e) {
                 console.error('[v0] Ошибка парсинга JSON:', e);
-                showDebugResults('Ошибка парсинга JSON. Сырой ответ:\\n' + text);
+                showDebugResults('Ошибка парсинга JSON. Сырой ответ:\n' + text);
             }
         })
         .catch(error => {
