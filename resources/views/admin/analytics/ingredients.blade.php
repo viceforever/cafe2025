@@ -51,8 +51,8 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="text-center text-success">
-                                                    <i class="iconify" data-icon="mdi:check-circle"></i> 
+                                                <td colspan="4" class="text-center text-dark">
+                                                    <i class="iconify text-success" data-icon="mdi:check-circle"></i> 
                                                     Все ингредиенты в достатке
                                                 </td>
                                             </tr>

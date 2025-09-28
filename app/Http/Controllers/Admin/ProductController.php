@@ -6,7 +6,7 @@ public function store(Request $request)
         'price_product' => 'required|numeric|min:0',
         'img_product' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         'id_category' => 'required|exists:categories,id',
-        'ingredients' => 'array',
+        'ingredients' => 'required|array|min:1',
         'ingredients.*.id' => 'required|exists:ingredients,id',
         'ingredients.*.quantity' => 'required|numeric|min:0.01',
     ], [
@@ -22,6 +22,8 @@ public function store(Request $request)
         'img_product.max' => 'Размер изображения не должен превышать 2MB',
         'id_category.required' => 'Выберите категорию товара',
         'id_category.exists' => 'Выбранная категория не существует',
+        'ingredients.required' => 'Необходимо добавить хотя бы один ингредиент',
+        'ingredients.min' => 'Необходимо добавить хотя бы один ингредиент',
         'ingredients.*.id.required' => 'Выберите ингредиент',
         'ingredients.*.id.exists' => 'Выбранный ингредиент не существует',
         'ingredients.*.quantity.required' => 'Укажите количество ингредиента',
@@ -29,14 +31,12 @@ public function store(Request $request)
         'ingredients.*.quantity.min' => 'Количество ингредиента должно быть больше 0',
     ]);
 
-    if ($request->has('ingredients')) {
-        foreach ($request->ingredients as $ingredientData) {
-            $ingredient = \App\Models\Ingredient::find($ingredientData['id']);
-            if ($ingredient->quantity < $ingredientData['quantity']) {
-                return back()->withErrors([
-                    'ingredients' => "Недостаточно ингредиента '{$ingredient->name}'. Доступно: {$ingredient->quantity} {$ingredient->unit}, требуется: {$ingredientData['quantity']} {$ingredient->unit}"
-                ])->withInput();
-            }
+    foreach ($request->ingredients as $ingredientData) {
+        $ingredient = \App\Models\Ingredient::find($ingredientData['id']);
+        if ($ingredient->quantity < $ingredientData['quantity']) {
+            return back()->withErrors([
+                'ingredients' => "Недостаточно ингредиента '{$ingredient->name}'. Доступно: {$ingredient->quantity} {$ingredient->unit}, требуется: {$ingredientData['quantity']} {$ingredient->unit}"
+            ])->withInput();
         }
     }
 
@@ -54,12 +54,10 @@ public function store(Request $request)
         'id_category' => $request->id_category,
     ]);
 
-    if ($request->has('ingredients')) {
-        foreach ($request->ingredients as $ingredientData) {
-            $product->ingredients()->attach($ingredientData['id'], [
-                'quantity_needed' => $ingredientData['quantity']
-            ]);
-        }
+    foreach ($request->ingredients as $ingredientData) {
+        $product->ingredients()->attach($ingredientData['id'], [
+            'quantity_needed' => $ingredientData['quantity']
+        ]);
     }
 
     return redirect()->route('admin.products.index')

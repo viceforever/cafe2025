@@ -12,7 +12,6 @@
                 </div>
             @endif
 
-            <!-- Добавил фильтрацию по статусу как у менеджера -->
             <div class="card mb-3">
                 <div class="card-body">
                     <form method="GET" action="{{ route('admin.orders.index') }}" class="row g-3">
@@ -41,6 +40,20 @@
                 </div>
             </div>
 
+            {{-- Added minimal styles only for fixing dropdown overflow in table --}}
+            <style>
+                .table-responsive {
+                    overflow: visible !important;
+                }
+                .dropdown-menu {
+                    z-index: 1050 !important;
+                }
+                /* Changed positioning to show dropdown above button without overlapping */
+                .dropup .dropdown-menu {
+                    bottom: 0 !important;
+                }
+            </style>
+
             <div class="table-responsive">
                 <table class="table">
                     <thead>
@@ -49,6 +62,9 @@
                             <th>Клиент</th>
                             <th>Сумма</th>
                             <th>Статус</th>
+                            <th>Способ оплаты</th>
+                            <th>Способ получения</th>
+                            <th>Комментарий</th>
                             <th>Дата создания</th>
                             <th>Состав заказа</th>
                             <th>Действия</th>
@@ -59,9 +75,8 @@
                             <tr>
                                 <td>{{ $order->id }}</td>
                                 <td>{{ $order->user->last_name }} {{ $order->user->first_name }}</td>
-                                <td>{{ $order->total_amount }} ₽</td>
+                                <td style="white-space: nowrap;">{{ $order->total_amount }} ₽</td>
                                 <td>
-                                    <!-- Заменил кнопки на выпадающий список изменения статуса -->
                                     <span class="badge 
                                         @if($order->status === 'В обработке') text-bg-warning
                                         @elseif($order->status === 'Подтвержден') text-bg-success
@@ -91,6 +106,17 @@
                                         {{ $order->status }}
                                     </span>
                                 </td>
+                                <td>{{ $order->payment_method_text }}</td>
+                                <td>{{ $order->delivery_method_text }}</td>
+                                <td>
+                                    @if($order->notes)
+                                        <span class="text-muted" title="{{ $order->notes }}">
+                                            {{ Str::limit($order->notes, 30) }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td>{{ $order->created_at->format('d.m.Y H:i') }}</td>
                                 <td>
                                     @if($order->orderItems && $order->orderItems->count() > 0)
@@ -104,13 +130,13 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <!-- Добавил выпадающий список для изменения статуса -->
-                                    <div class="dropdown">
+                                    {{-- Changed to dropup to prevent scrolling --}}
+                                    <div class="dropdown dropup">
                                         <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
-                                                type="button" data-bs-toggle="dropdown">
+                                                type="button" data-bs-toggle="dropdown" data-bs-auto-close="true">
                                             Изменить статус
                                         </button>
-                                        <ul class="dropdown-menu">
+                                        <ul class="dropdown-menu dropdown-menu-end">
                                             @foreach(['В обработке', 'Подтвержден', 'Готовится', 'Готов к выдаче', 'Выдан', 'Отменен'] as $status)
                                                 @if($status !== $order->status)
                                                     <li>
@@ -132,7 +158,6 @@
                 </table>
             </div>
 
-            <!-- Заменил стандартную пагинацию на кастомную с русским языком -->
             @if($orders->hasPages())
                 <div class="mt-4">
                     {{ $orders->appends(request()->query())->links('custom.pagination') }}

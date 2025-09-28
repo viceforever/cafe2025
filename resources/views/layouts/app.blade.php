@@ -177,7 +177,7 @@
       <hr class="m-0">
       <div class="row mt-3">
         <div class="col-md-6 copyright">
-          <p class="secondary-font">© 2024 Курсовая </p>
+          <p class="secondary-font">© 2025 Курсовая </p>
         </div>
         <div class="col-md-6 text-md-end">
           <a class="nav-link me-3" href="/help">Помощь</a>

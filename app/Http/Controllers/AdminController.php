@@ -44,21 +44,25 @@ class AdminController extends Controller
             'price_product' => 'required|numeric|min:0',
             'img_product' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'id_category' => 'required|exists:category_products,id',
-            'ingredients' => 'array',
+            'ingredients' => 'required|array|min:1',
             'ingredients.*.id' => 'required|exists:ingredients,id',
             'ingredients.*.quantity' => 'required|numeric|min:0.01',
         ],[
             'name_product.unique' => 'Товар с таким названием уже существует.',
+            'img_product.required' => 'Изображение товара обязательно для загрузки',
+            'img_product.image' => 'Файл должен быть изображением',
+            'img_product.mimes' => 'Изображение должно быть в формате: jpeg, png, jpg, gif',
+            'img_product.max' => 'Размер изображения не должен превышать 2MB',
+            'ingredients.required' => 'Необходимо добавить хотя бы один ингредиент',
+            'ingredients.min' => 'Необходимо добавить хотя бы один ингредиент',
         ]);
 
-        if ($request->has('ingredients')) {
-            foreach ($request->ingredients as $ingredientData) {
-                $ingredient = Ingredient::find($ingredientData['id']);
-                if ($ingredient->quantity < $ingredientData['quantity']) {
-                    return back()->withErrors([
-                        'ingredients' => "Недостаточно ингредиента '{$ingredient->name}'. Доступно: {$ingredient->quantity} {$ingredient->unit}, требуется: {$ingredientData['quantity']} {$ingredient->unit}"
-                    ])->withInput();
-                }
+        foreach ($request->ingredients as $ingredientData) {
+            $ingredient = Ingredient::find($ingredientData['id']);
+            if ($ingredient->quantity < $ingredientData['quantity']) {
+                return back()->withErrors([
+                    'ingredients' => "Недостаточно ингредиента '{$ingredient->name}'. Доступно: {$ingredient->quantity} {$ingredient->unit}, требуется: {$ingredientData['quantity']} {$ingredient->unit}"
+                ])->withInput();
             }
         }
 
@@ -72,12 +76,10 @@ class AdminController extends Controller
             'id_category' => $request->id_category,
         ]);
 
-        if ($request->has('ingredients')) {
-            foreach ($request->ingredients as $ingredientData) {
-                $product->ingredients()->attach($ingredientData['id'], [
-                    'quantity_needed' => $ingredientData['quantity']
-                ]);
-            }
+        foreach ($request->ingredients as $ingredientData) {
+            $product->ingredients()->attach($ingredientData['id'], [
+                'quantity_needed' => $ingredientData['quantity']
+            ]);
         }
 
         return redirect()->route('admin.products.index')->with('success', 'Товар успешно создан');
@@ -111,21 +113,24 @@ class AdminController extends Controller
             'price_product' => 'required|numeric|min:0',
             'img_product' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'id_category' => 'required|exists:category_products,id',
-            'ingredients' => 'array',
+            'ingredients' => 'required|array|min:1',
             'ingredients.*.id' => 'required|exists:ingredients,id',
             'ingredients.*.quantity' => 'required|numeric|min:0.01',
         ],[
             'name_product.unique' => 'Товар с таким названием уже существует.',
+            'img_product.image' => 'Файл должен быть изображением',
+            'img_product.mimes' => 'Изображение должно быть в формате: jpeg, png, jpg, gif',
+            'img_product.max' => 'Размер изображения не должен превышать 2MB',
+            'ingredients.required' => 'Необходимо добавить хотя бы один ингредиент',
+            'ingredients.min' => 'Необходимо добавить хотя бы один ингредиент',
         ]);
 
-        if ($request->has('ingredients')) {
-            foreach ($request->ingredients as $ingredientData) {
-                $ingredient = Ingredient::find($ingredientData['id']);
-                if ($ingredient->quantity < $ingredientData['quantity']) {
-                    return back()->withErrors([
-                        'ingredients' => "Недостаточно ингредиента '{$ingredient->name}'. Доступно: {$ingredient->quantity} {$ingredient->unit}, требуется: {$ingredientData['quantity']} {$ingredient->unit}"
-                    ])->withInput();
-                }
+        foreach ($request->ingredients as $ingredientData) {
+            $ingredient = Ingredient::find($ingredientData['id']);
+            if ($ingredient->quantity < $ingredientData['quantity']) {
+                return back()->withErrors([
+                    'ingredients' => "Недостаточно ингредиента '{$ingredient->name}'. Доступно: {$ingredient->quantity} {$ingredient->unit}, требуется: {$ingredientData['quantity']} {$ingredient->unit}"
+                ])->withInput();
             }
         }
 
@@ -138,13 +143,11 @@ class AdminController extends Controller
 
         $product->update($data);
 
-        $product->ingredients()->detach(); // удаляем старые связи
-        if ($request->has('ingredients')) {
-            foreach ($request->ingredients as $ingredientData) {
-                $product->ingredients()->attach($ingredientData['id'], [
-                    'quantity_needed' => $ingredientData['quantity']
-                ]);
-            }
+        $product->ingredients()->detach();
+        foreach ($request->ingredients as $ingredientData) {
+            $product->ingredients()->attach($ingredientData['id'], [
+                'quantity_needed' => $ingredientData['quantity']
+            ]);
         }
 
         return redirect()->route('admin.products.index')->with('success', 'Товар успешно обновлен');

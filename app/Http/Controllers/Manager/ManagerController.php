@@ -243,17 +243,32 @@ class ManagerController extends Controller
         $availability = [];
 
         foreach ($products as $product) {
+            $allIngredients = [];
+            $missingIngredients = [];
+
+            foreach ($product->ingredients as $ingredient) {
+                $neededQuantity = $ingredient->pivot->quantity_needed;
+                $canMake = $ingredient->canMakeProduct($neededQuantity);
+                
+                $allIngredients[] = [
+                    'ingredient' => $ingredient,
+                    'needed_quantity' => $neededQuantity,
+                    'available_quantity' => $ingredient->quantity,
+                    'unit' => $ingredient->unit,
+                    'sufficient' => $canMake
+                ];
+
+                if (!$canMake) {
+                    $missingIngredients[] = $ingredient;
+                }
+            }
+
             $availability[$product->id] = [
                 'product' => $product,
                 'available' => $product->isAvailable(),
-                'missing_ingredients' => []
+                'missing_ingredients' => $missingIngredients,
+                'all_ingredients' => $allIngredients
             ];
-
-            foreach ($product->ingredients as $ingredient) {
-                if (!$ingredient->canMakeProduct($ingredient->pivot->quantity_needed)) {
-                    $availability[$product->id]['missing_ingredients'][] = $ingredient;
-                }
-            }
         }
 
         return view('manager.products.availability', compact('availability'));

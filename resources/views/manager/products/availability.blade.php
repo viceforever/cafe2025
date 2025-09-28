@@ -18,14 +18,41 @@
                             <div class="card-header {{ $item['available'] ? 'bg-success text-white' : 'bg-danger text-white' }}">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0">{{ $item['product']->name_product }}</h6>
-                                    <span class="badge {{ $item['available'] ? 'bg-light text-success' : 'bg-light text-danger' }}">
+                                    <span class="badge {{ $item['available'] ? 'bg-primary text-white' : 'bg-light text-danger' }}">
                                         {{ $item['available'] ? 'Доступно' : 'Недоступно' }}
                                     </span>
                                 </div>
                             </div>
                             <div class="card-body">
+                                <h6 class="mb-3">Необходимые ингредиенты:</h6>
+                                <div class="row">
+                                    @foreach($item['all_ingredients'] as $ingredientData)
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center p-2 rounded {{ $ingredientData['sufficient'] ? 'bg-light-success' : 'bg-light-danger' }}" style="background-color: {{ $ingredientData['sufficient'] ? '#d4edda' : '#f8d7da' }};">
+                                                <div>
+                                                    <strong>{{ $ingredientData['ingredient']->name }}</strong><br>
+                                                    <small class="text-muted">
+                                                        Нужно: {{ $ingredientData['needed_quantity'] }} {{ $ingredientData['unit'] }}
+                                                    </small>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge {{ $ingredientData['sufficient'] ? 'bg-success' : 'bg-danger' }}">
+                                                        {{ $ingredientData['available_quantity'] }} {{ $ingredientData['unit'] }}
+                                                    </span>
+                                                    @if($ingredientData['sufficient'])
+                                                        <i class="iconify text-success d-block" data-icon="mdi:check-circle"></i>
+                                                    @else
+                                                        <i class="iconify text-danger d-block" data-icon="mdi:alert-circle"></i>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
                                 @if(!$item['available'] && count($item['missing_ingredients']) > 0)
-                                    <h6 class="text-danger">Недостающие ингредиенты:</h6>
+                                    <hr>
+                                    <h6 class="text-danger mt-3">Недостающие ингредиенты:</h6>
                                     <ul class="list-unstyled">
                                         @foreach($item['missing_ingredients'] as $ingredient)
                                             <li class="text-danger">
@@ -36,8 +63,9 @@
                                         @endforeach
                                     </ul>
                                 @else
-                                    <p class="text-success mb-0">
-                                        <i class="iconify" data-icon="mdi:check-circle"></i>
+                                    <hr>
+                                    <p class="text-dark mb-0 mt-3">
+                                        <i class="iconify text-success" data-icon="mdi:check-circle"></i>
                                         Все ингредиенты в наличии
                                     </p>
                                 @endif
