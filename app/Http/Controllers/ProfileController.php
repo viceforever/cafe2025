@@ -50,7 +50,7 @@ class ProfileController extends Controller
             'current_password' => 'required',
             'new_password' => 'required|string|min:8|confirmed',
         ], [
-            'current_password.required' => 'Введите текущий пароль.',
+            'current_password.required' => 'Введите ��екущий пароль.',
             'new_password.required' => 'Введите новый пароль.',
             'new_password.min' => 'Новый пароль должен содержать минимум 8 символов.',
             'new_password.confirmed' => 'Подтверждение пароля не совпадает.',

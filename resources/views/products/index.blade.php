@@ -62,30 +62,37 @@
                 <div class="isotope-container row">
                     @foreach($products[$category->id] as $product)
                         <div class="item cat col-md-4 col-lg-3 my-4">
-                            <div class="card position-relative">
+                            <div class="card position-relative" style="height: 480px;">
                                 <a href="{{ route('product.show', $product->id) }}">
-                                    <img src="{{ asset('storage/' . $product->img_product) }}" class="img-fluid rounded-4" alt="{{ $product->name_product }}">
+                                    <div class="product-image-container" style="height: 280px; overflow: hidden; border-radius: 1rem;">
+                                        <img src="{{ asset('storage/' . $product->img_product) }}" 
+                                             class="img-fluid w-100 h-100" 
+                                             style="object-fit: cover; object-position: center;" 
+                                             alt="{{ $product->name_product }}">
+                                    </div>
                                 </a>
-                                <div class="card-body p-0">
+                                <div class="card-body p-0 d-flex flex-column" style="height: 200px;">
                                     <a href="{{ route('product.show', $product->id) }}">
-                                        <h3 class="card-title pt-4 m-0">{{ $product->name_product }}</h3>
+                                        <h3 class="card-title pt-4 m-0" style="height: 60px; overflow: hidden;">{{ $product->name_product }}</h3>
                                     </a>
-                                    <div class="card-text">
-                                        <span class="rating secondary-font">
-                                            {{ Str::limit($product->description_product, 100) }}
+                                    <div class="card-text flex-grow-1 d-flex flex-column justify-content-between">
+                                        <span class="rating secondary-font" style="height: 50px; overflow: hidden; font-size: 0.9rem;">
+                                            {{ Str::limit($product->description_product, 80) }}
                                         </span>
-                                        <h3 class="secondary-font text-primary">{{ $product->price_product }} руб</h3>
-                                        <div class="d-flex flex-wrap mt-3">
-                                            <form action="{{ route('cart.add', $product->id) }}" method="POST" id="addToCartForm">
-                                                @csrf
-                                                <button type="submit" class="btn btn-primary">Добавить в корзину</button>
-                                            </form>
-                                            @if(session('success') && session('product_id') == $product->id)
-                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
+                                        <div class="mt-auto">
+                                            <h3 class="secondary-font text-primary mb-2">{{ $product->price_product }} руб</h3>
+                                            <div class="d-flex flex-wrap">
+                                                <form action="{{ route('cart.add', $product->id) }}" method="POST" id="addToCartForm">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-primary btn-sm">Добавить в корзину</button>
+                                                </form>
+                                                @if(session('success') && session('product_id') == $product->id)
+                                                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                                                        {{ session('success') }}
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

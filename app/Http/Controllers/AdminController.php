@@ -7,6 +7,7 @@ use App\Models\CategoryProduct;
 use App\Models\Ingredient;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -17,8 +18,8 @@ class AdminController extends Controller
             abort(403,'У вас нет прав доступа к этой странице.');
         }
         $categories = CategoryProduct::all();
-        $products = Product::all();
-        return view('admin.products.index', compact('products'));
+        $products = Product::with('category')->get();
+        return view('admin.products.index', compact('products', 'categories'));
     }
 
     public function create(Request $request)
@@ -66,7 +67,7 @@ class AdminController extends Controller
             }
         }
 
-        $imagePath = $request->file('img_product')->store('products', 'public');
+        $imagePath = $this->processAndStoreImage($request->file('img_product'));
 
         $product = Product::create([
             'name_product' => $request->name_product,
@@ -137,8 +138,13 @@ class AdminController extends Controller
         $data = $request->except('img_product');
 
         if ($request->hasFile('img_product')) {
-            $imagePath = $request->file('img_product')->store('products', 'public');
+            $imagePath = $this->processAndStoreImage($request->file('img_product'));
             $data['img_product'] = $imagePath;
+            
+            // Delete old image if exists
+            if ($product->img_product && Storage::disk('public')->exists($product->img_product)) {
+                Storage::disk('public')->delete($product->img_product);
+            }
         }
 
         $product->update($data);
@@ -161,5 +167,18 @@ class AdminController extends Controller
         }
         $product->delete();
         return redirect()->route('admin.products.index')->with('success', 'Товар успешно удален');
+    }
+
+    private function processAndStoreImage($uploadedFile)
+    {
+        // Create unique filename
+        $filename = time() . '_' . uniqid() . '.' . $uploadedFile->getClientOriginalExtension();
+        $path = 'products/' . $filename;
+        
+        // Store the original image directly
+        // Laravel will handle the file storage
+        Storage::disk('public')->put($path, file_get_contents($uploadedFile->getPathname()));
+        
+        return $path;
     }
 }

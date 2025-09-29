@@ -14,20 +14,21 @@ class ProductController extends Controller
     }
 
     public function search(Request $request)
-{
-    $query = $request->input('query');
-    $categories = CategoryProduct::all(); // все категории
+    {
+        $query = $request->input('query');
+        $categories = CategoryProduct::all(); // все категории
 
-    if ($query){
-        $products = Product::where('name_product', 'LIKE', "%{$query}%")
-        ->orWhere('description_product', 'LIKE', "%{$query}%")
-        ->get()
-        ->groupBy('id_category');
-    } else{
-        $products = Product::all()->groupBy('id_category');
+        if ($query){
+            $products = Product::where('name_product', 'LIKE', "%{$query}%")
+            ->orWhere('description_product', 'LIKE', "%{$query}%")
+            ->with('category')
+            ->get()
+            ->groupBy('id_category');
+        } else{
+            $products = Product::with('category')->get()->groupBy('id_category');
+        }
+        return view('products.index', compact('products','categories','query',));
     }
-    return view('products.index', compact('products','categories','query',));
-}
 
     public function show($id)
     {
@@ -36,39 +37,39 @@ class ProductController extends Controller
     }
 
     public function addToCart(Request $request,$id)
-{
-    $product = Product::findOrFail($id);
-    $quantity = $request->input('quantity', 1);
-    $cart = session()->get('cart', []);
-    
-    if(isset($cart[$id])) {
-        $cart[$id]['quantity']+= $quantity;
-    } else {
-        $cart[$id] = [
-            "id" => $product->id,
-            "name" => $product->name_product,
-            "quantity" => $quantity,
-            "price" => $product->price_product,
-            "img_product" => $product->img_product
-        ];
+    {
+        $product = Product::findOrFail($id);
+        $quantity = $request->input('quantity', 1);
+        $cart = session()->get('cart', []);
+        
+        if(isset($cart[$id])) {
+            $cart[$id]['quantity']+= $quantity;
+        } else {
+            $cart[$id] = [
+                "id" => $product->id,
+                "name" => $product->name_product,
+                "quantity" => $quantity,
+                "price" => $product->price_product,
+                "img_product" => $product->img_product
+            ];
+        }
+        
+        session()->put('cart', $cart);
+        return redirect()->back()->with('success', 'Товар добавлен в корзину!');
     }
-    
-    session()->put('cart', $cart);
-    return redirect()->back()->with('success', 'Товар добавлен в корзину!');
-}
 
     // Удаление товара из корзины
     public function removeFromCart($id)
-{
-    $cart = session()->get('cart');
+    {
+        $cart = session()->get('cart');
 
-    if (isset($cart[$id])) {
-        unset($cart[$id]);
-        session()->put('cart', $cart);
+        if (isset($cart[$id])) {
+            unset($cart[$id]);
+            session()->put('cart', $cart);
+        }
+
+        return redirect()->route('cart.index')->with('success', 'Товар удалён из корзины!');
     }
-
-    return redirect()->route('cart.index')->with('success', 'Товар удалён из корзины!');
-}
 
 
     public function cart()
@@ -78,65 +79,64 @@ class ProductController extends Controller
     }
 
     public function update(Request $request, $id)
-{
-    $action = $request->input('action');
-    $cart = session()->get('cart', []);
+    {
+        $action = $request->input('action');
+        $cart = session()->get('cart', []);
 
-    if (isset($cart[$id])) {
-        if ($action === 'increase') {
-            $cart[$id]['quantity']++;
-        } elseif ($action === 'decrease') {
-            if ($cart[$id]['quantity'] > 1) {
-                $cart[$id]['quantity']--;
+        if (isset($cart[$id])) {
+            if ($action === 'increase') {
+                $cart[$id]['quantity']++;
+            } elseif ($action === 'decrease') {
+                if ($cart[$id]['quantity'] > 1) {
+                    $cart[$id]['quantity']--;
+                } else {
+                    unset($cart[$id]);
+                    return response()->json([
+                        'success' => true,
+                        'removed' => true,
+                        'cartTotal' => number_format($this->getCartTotal(), 2, '.', '')
+                    ]);
+                }
             } else {
-                unset($cart[$id]);
-                return response()->json([
-                    'success' => true,
-                    'removed' => true,
-                    'cartTotal' => number_format($this->getCartTotal(), 2, '.', '')
-                ]);
+                // Если действие не указано, устанавливаем количество напрямую
+                $quantity = $request->input('quantity');
+                if ($quantity > 0) {
+                    $cart[$id]['quantity'] = $quantity;
+                } else {
+                    unset($cart[$id]);
+                    return response()->json([
+                        'success' => true,
+                        'removed' => true,
+                        'cartTotal' => number_format($this->getCartTotal(), 2, '.', '')
+                    ]);
+                }
             }
-        } else {
-            // Если действие не указано, устанавливаем количество напрямую
-            $quantity = $request->input('quantity');
-            if ($quantity > 0) {
-                $cart[$id]['quantity'] = $quantity;
-            } else {
-                unset($cart[$id]);
-                return response()->json([
-                    'success' => true,
-                    'removed' => true,
-                    'cartTotal' => number_format($this->getCartTotal(), 2, '.', '')
-                ]);
-            }
+
+            session()->put('cart', $cart);
+
+            $itemTotal = $cart[$id]['price'] * $cart[$id]['quantity'];
+            $cartTotal = $this->getCartTotal();
+
+            return response()->json([
+                'success' => true,
+                'itemTotal' => number_format($itemTotal, 2, '.', ''),
+                'cartTotal' => number_format($cartTotal, 2, '.', ''),
+                'quantity' => $cart[$id]['quantity']
+            ]);
         }
 
-        session()->put('cart', $cart);
-
-        $itemTotal = $cart[$id]['price'] * $cart[$id]['quantity'];
-        $cartTotal = $this->getCartTotal();
-
         return response()->json([
-            'success' => true,
-            'itemTotal' => number_format($itemTotal, 2, '.', ''),
-            'cartTotal' => number_format($cartTotal, 2, '.', ''),
-            'quantity' => $cart[$id]['quantity']
-        ]);
+            'success' => false,
+            'message' => 'Товар не найден'
+        ], 404);
     }
 
-    return response()->json([
-        'success' => false,
-        'message' => 'Товар не найден'
-    ], 404);
+    private function getCartTotal()
+    {
+        $cart = session()->get('cart', []);
+        return array_reduce($cart, function ($carry, $item) {
+            return $carry + ($item['price'] * $item['quantity']);
+        }, 0);
+        
+    }
 }
-
-private function getCartTotal()
-{
-    $cart = session()->get('cart', []);
-    return array_reduce($cart, function ($carry, $item) {
-        return $carry + ($item['price'] * $item['quantity']);
-    }, 0);
-    
-}
-}
-
