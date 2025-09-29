@@ -49,7 +49,7 @@
                                 <!-- Кнопки экспорта -->
                                 <div class="btn-group ml-2">
                                     <button type="button" class="btn btn-success dropdown-toggle" 
-                                            data-toggle="dropdown">
+                                            data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-download"></i> Экспорт
                                     </button>
                                     <div class="dropdown-menu">

@@ -13,7 +13,7 @@
                     <div class="alert alert-danger">{{ session('error') }}</div>
                 @endif
 
-                <form action="{{ route('checkout.process') }}" method="POST">
+                <form action="{{ route('checkout.process') }}" method="POST" id="checkout-form">
                     @csrf
                     
                     {{-- Способ оплаты --}}
@@ -68,25 +68,63 @@
                         </div>
                     </div>
 
-                    {{-- Адрес доставки --}}
+                    {{-- Структурированный адрес доставки --}}
                     <div class="card mb-4" id="delivery-address-card" style="display: none;">
                         <div class="card-header">
                             <h5 class="mb-0">Адрес доставки</h5>
                         </div>
                         <div class="card-body">
-                            <div class="mb-3">
-                                <label for="delivery_address" class="form-label">Адрес</label>
-                                {{-- обновляем поле ввода адреса с контейнером для автоподсказок --}}
-                                <div class="position-relative">
-                                    <input type="text" class="form-control @error('delivery_address') is-invalid @enderror" 
-                                           id="delivery_address" name="delivery_address" value="{{ old('delivery_address') }}" 
-                                           placeholder="Начните вводить адрес..." autocomplete="off">
-                                    <div id="address-suggestions" class="position-absolute w-100 bg-white border border-top-0 rounded-bottom shadow-sm" 
-                                         style="display: none; z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="delivery_city" class="form-label">Город <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('delivery_city') is-invalid @enderror" 
+                                           id="delivery_city" name="delivery_city" value="Иркутск" readonly
+                                           style="background-color: #f8f9fa;">
+                                    <small class="text-muted">Доставка осуществляется только по городу Иркутск</small>
+                                    @error('delivery_city')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                @error('delivery_address')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <div class="col-md-6 mb-3">
+                                    <label for="delivery_street" class="form-label">Улица/Микрорайон <span class="text-danger">*</span></label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control @error('delivery_street') is-invalid @enderror" 
+                                               id="delivery_street" name="delivery_street" value="{{ old('delivery_street') }}" 
+                                               placeholder="Например: ул. Ленина или мкр. Юбилейный" autocomplete="off">
+                                        <div id="street-suggestions" class="position-absolute w-100 bg-white border border-top-0 rounded-bottom shadow-sm" 
+                                             style="display: none; z-index: 1000; max-height: 200px; overflow-y: auto;"></div>
+                                    </div>
+                                    @error('delivery_street')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="delivery_house" class="form-label">Дом <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control @error('delivery_house') is-invalid @enderror" 
+                                           id="delivery_house" name="delivery_house" value="{{ old('delivery_house') }}" 
+                                           placeholder="Например: 15, 7А, 12/1">
+                                    @error('delivery_house')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="delivery_apartment" class="form-label">Квартира</label>
+                                    <input type="text" class="form-control @error('delivery_apartment') is-invalid @enderror" 
+                                           id="delivery_apartment" name="delivery_apartment" value="{{ old('delivery_apartment') }}" 
+                                           placeholder="Например: 25">
+                                    <small class="text-muted">Необязательно для частных домов</small>
+                                    @error('delivery_apartment')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            {{-- Предварительный просмотр адреса --}}
+                            <div class="mt-3 p-3 bg-light rounded" id="address-preview" style="display: none;">
+                                <h6 class="mb-2">Предварительный адрес:</h6>
+                                <div id="address-preview-text" class="text-muted"></div>
                             </div>
                         </div>
                     </div>
@@ -118,28 +156,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100">Оформить заказ</button>
-                    
-                    {{-- Добавляем отладочные кнопки для тестирования DaData --}}
-                    <div class="mt-4 p-3 bg-light rounded">
-                        <h6>Отладка DaData:</h6>
-                        {{-- Добавляю кнопку для базового API теста --}}
-                        <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="testBasicApi()">
-                            Базовый API тест
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="testSimple()">
-                            Простой тест
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-info me-2" onclick="testDaDataConfig()">
-                            Проверить конфигурацию DaData
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-success" onclick="testDaDataApi()">
-                            Тестировать API DaData
-                        </button>
-                        <div id="debug-results" class="mt-3" style="display: none;">
-                            <pre id="debug-output" class="bg-white p-2 border rounded small"></pre>
-                        </div>
-                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100" id="submit-btn">Оформить заказ</button>
                 </form>
             </div>
 
@@ -175,70 +192,163 @@
     </section>
 </div>
 
-{{-- добавляем JavaScript для работы с DaData подсказками --}}
+{{-- Обновленный JavaScript для структурированной валидации адреса --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const deliveryRadio = document.getElementById('delivery');
     const pickupRadio = document.getElementById('pickup');
     const addressCard = document.getElementById('delivery-address-card');
-    const addressInput = document.getElementById('delivery_address');
-    const suggestionsContainer = document.getElementById('address-suggestions');
+    const streetInput = document.getElementById('delivery_street');
+    const houseInput = document.getElementById('delivery_house');
+    const apartmentInput = document.getElementById('delivery_apartment');
+    const streetSuggestions = document.getElementById('street-suggestions');
+    const addressPreview = document.getElementById('address-preview');
+    const addressPreviewText = document.getElementById('address-preview-text');
+    const form = document.getElementById('checkout-form');
+    const submitBtn = document.getElementById('submit-btn');
+    
     let debounceTimer;
+    let addressValid = false;
+    let streetValid = false;
+    let validStreets = new Set();
+    let lastSearchQuery = '';
 
     function toggleAddressCard() {
         if (deliveryRadio && deliveryRadio.checked) {
             addressCard.style.display = 'block';
-            addressInput.required = true;
+            streetInput.required = true;
+            houseInput.required = true;
+            validateAddress();
         } else {
             addressCard.style.display = 'none';
-            addressInput.required = false;
-            addressInput.value = '';
-            suggestionsContainer.style.display = 'none';
+            streetInput.required = false;
+            houseInput.required = false;
+            streetInput.value = '';
+            houseInput.value = '';
+            apartmentInput.value = '';
+            streetSuggestions.style.display = 'none';
+            addressPreview.style.display = 'none';
+            streetValid = true;
+            addressValid = true;
+            validStreets.clear();
+            updateSubmitButton();
         }
     }
 
-    // Получить подсказки адресов от DaData API
-    function fetchAddressSuggestions(query) {
-        console.log('[v0] Запрос подсказок для:', query);
+    function validateAddress() {
+        const street = streetInput.value.trim();
+        const house = houseInput.value.trim();
         
+        if (deliveryRadio.checked) {
+            streetValid = validStreets.has(street) || street.length === 0;
+            addressValid = streetValid && street.length >= 3 && house.length >= 1;
+            updateAddressPreview();
+            updateSubmitButton();
+        }
+    }
+
+    function updateAddressPreview() {
+        const street = streetInput.value.trim();
+        const house = houseInput.value.trim();
+        const apartment = apartmentInput.value.trim();
+        
+        if (street && house) {
+            let addressParts = ['г. Иркутск', street, 'д. ' + house];
+            if (apartment) {
+                addressParts.push('кв. ' + apartment);
+            }
+            
+            addressPreviewText.textContent = addressParts.join(', ');
+            addressPreview.style.display = 'block';
+        } else {
+            addressPreview.style.display = 'none';
+        }
+    }
+
+    function updateSubmitButton() {
+        if (deliveryRadio.checked && !addressValid) {
+            submitBtn.disabled = true;
+            if (!streetValid && streetInput.value.trim().length >= 3) {
+                submitBtn.textContent = 'Улица не найдена в базе адресов';
+            } else {
+                submitBtn.textContent = 'Заполните корректный адрес';
+            }
+            submitBtn.classList.remove('btn-primary');
+            submitBtn.classList.add('btn-secondary');
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Оформить заказ';
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-primary');
+        }
+    }
+
+    function fetchStreetSuggestions(query) {
         if (query.length < 3) {
-            suggestionsContainer.style.display = 'none';
+            streetSuggestions.style.display = 'none';
+            validStreets.clear();
+            validateAddress();
             return;
         }
 
-        const url = `/api/address-suggestions?query=${encodeURIComponent(query)}`;
-        console.log('[v0] URL запроса:', url);
+        lastSearchQuery = query;
+        const fullQuery = `г Иркутск ${query}`;
+        const url = `/api/address-suggestions?query=${encodeURIComponent(fullQuery)}`;
 
         fetch(url)
-            .then(response => {
-                console.log('[v0] Статус ответа:', response.status);
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log('[v0] Данные ответа:', data);
-                suggestionsContainer.innerHTML = '';
+                if (lastSearchQuery !== query) {
+                    return;
+                }
+                
+                streetSuggestions.innerHTML = '';
+                validStreets.clear();
                 
                 if (data.error) {
-                    console.error('[v0] Ошибка API:', data.error);
                     const errorItem = document.createElement('div');
-                    errorItem.className = 'p-2 text-danger';
-                    errorItem.textContent = 'Ошибка загрузки подсказок: ' + data.error;
-                    suggestionsContainer.appendChild(errorItem);
-                    suggestionsContainer.style.display = 'block';
+                    errorItem.className = 'p-2 text-success';
+                    errorItem.textContent = 'Ошибка загрузки подсказок';
+                    streetSuggestions.appendChild(errorItem);
+                    streetSuggestions.style.display = 'block';
+                    validateAddress();
                     return;
                 }
                 
                 if (data.length > 0) {
-                    console.log('[v0] Найдено подсказок:', data.length);
+                    const uniqueStreets = new Set();
+                    const uniqueSuggestions = [];
+                    
                     data.forEach(suggestion => {
+                        const addressParts = suggestion.value.split(', ');
+                        let streetName = '';
+                        
+                        for (let part of addressParts) {
+                            if (part.includes('ул ') || part.includes('пр-кт ') || 
+                                part.includes('мкр ') || part.includes('пер ') ||
+                                part.includes('наб ') || part.includes('б-р ')) {
+                                streetName = part;
+                                break;
+                            }
+                        }
+                        
+                        if (streetName && !uniqueStreets.has(streetName)) {
+                            uniqueStreets.add(streetName);
+                            uniqueSuggestions.push(streetName);
+                            validStreets.add(streetName);
+                        }
+                    });
+                    
+                    uniqueSuggestions.forEach(streetName => {
                         const suggestionItem = document.createElement('div');
                         suggestionItem.className = 'p-2 border-bottom cursor-pointer suggestion-item';
                         suggestionItem.style.cursor = 'pointer';
-                        suggestionItem.textContent = suggestion.value;
+                        suggestionItem.textContent = streetName;
                         
                         suggestionItem.addEventListener('click', function() {
-                            addressInput.value = suggestion.value;
-                            suggestionsContainer.style.display = 'none';
+                            streetInput.value = streetName;
+                            streetSuggestions.style.display = 'none';
+                            validateAddress();
                         });
                         
                         suggestionItem.addEventListener('mouseenter', function() {
@@ -249,36 +359,51 @@ document.addEventListener('DOMContentLoaded', function() {
                             this.style.backgroundColor = 'white';
                         });
                         
-                        suggestionsContainer.appendChild(suggestionItem);
+                        streetSuggestions.appendChild(suggestionItem);
                     });
                     
-                    suggestionsContainer.style.display = 'block';
+                    if (streetSuggestions.children.length > 0) {
+                        streetSuggestions.style.display = 'block';
+                    } else {
+                        streetSuggestions.style.display = 'none';
+                    }
                 } else {
-                    console.log('[v0] Подсказки не найдены');
-                    suggestionsContainer.style.display = 'none';
+                    const noResultsItem = document.createElement('div');
+                    noResultsItem.className = 'p-2 text-muted';
+                    noResultsItem.textContent = 'Улица не найдена';
+                    streetSuggestions.appendChild(noResultsItem);
+                    streetSuggestions.style.display = 'block';
                 }
+                
+                validateAddress();
             })
             .catch(error => {
-                console.error('[v0] Ошибка получения подсказок:', error);
-                suggestionsContainer.innerHTML = '<div class="p-2 text-danger">Ошибка сети: ' + error.message + '</div>';
-                suggestionsContainer.style.display = 'block';
+                console.error('Ошибка получения подсказок:', error);
+                streetSuggestions.style.display = 'none';
+                validStreets.clear();
+                validateAddress();
             });
     }
 
-    // Обработчик ввода в поле адреса с задержкой
-    addressInput.addEventListener('input', function() {
+    streetInput.addEventListener('input', function() {
         const query = this.value.trim();
         
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            fetchAddressSuggestions(query);
+            fetchStreetSuggestions(query);
         }, 300);
+        
+        validateAddress();
     });
 
-    // Скрыть подсказки при клике вне поля
+    houseInput.addEventListener('input', validateAddress);
+    apartmentInput.addEventListener('input', function() {
+        updateAddressPreview();
+    });
+
     document.addEventListener('click', function(event) {
-        if (!addressInput.contains(event.target) && !suggestionsContainer.contains(event.target)) {
-            suggestionsContainer.style.display = 'none';
+        if (!streetInput.contains(event.target) && !streetSuggestions.contains(event.target)) {
+            streetSuggestions.style.display = 'none';
         }
     });
 
@@ -289,11 +414,6 @@ document.addEventListener('DOMContentLoaded', function() {
         pickupRadio.addEventListener('change', toggleAddressCard);
     }
 
-    // Проверяем при загрузке страницы
-    toggleAddressCard();
-
-    // Валидация формы
-    const form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
         const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
         const deliveryMethod = document.querySelector('input[name="delivery_method"]:checked');
@@ -318,103 +438,24 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
 
-        if (deliveryMethod.value === 'delivery' && !addressInput.value.trim()) {
-            e.preventDefault();
-            alert('Пожалуйста, укажите адрес доставки');
-            addressInput.focus();
-            return false;
+        if (deliveryMethod.value === 'delivery') {
+            if (!streetValid && streetInput.value.trim().length >= 3) {
+                e.preventDefault();
+                alert('Указанная улица не найдена в базе адресов Иркутска. Пожалуйста, выберите улицу из предложенных вариантов.');
+                streetInput.focus();
+                return false;
+            }
+            
+            if (!addressValid) {
+                e.preventDefault();
+                alert('Пожалуйста, заполните корректный адрес доставки');
+                streetInput.focus();
+                return false;
+            }
         }
     });
+
+    toggleAddressCard();
 });
-
-function testBasicApi() {
-    console.log('[v0] Базовый API тест...');
-    
-    fetch('/api/test')
-        .then(response => {
-            console.log('[v0] Статус ответа базового API:', response.status);
-            console.log('[v0] Заголовки ответа:', response.headers);
-            return response.text();
-        })
-        .then(text => {
-            console.log('[v0] Сырой ответ базового API:', text);
-            try {
-                const data = JSON.parse(text);
-                console.log('[v0] Результат базового API теста:', data);
-                showDebugResults('Базовый API тест успешен:\n' + JSON.stringify(data, null, 2));
-            } catch (e) {
-                console.error('[v0] Ошибка парсинга JSON:', e);
-                showDebugResults('Ошибка парсинга JSON. Сырой ответ:\n' + text);
-            }
-        })
-        .catch(error => {
-            console.error('[v0] Ошибка базового API теста:', error);
-            showDebugResults('Ошибка сети: ' + error.message);
-        });
-}
-
-function testSimple() {
-    console.log('[v0] Простой тест...');
-    
-    fetch('/api/simple-test')
-        .then(response => {
-            console.log('[v0] Статус ответа простого теста:', response.status);
-            console.log('[v0] Заголовки ответа:', response.headers);
-            return response.text();
-        })
-        .then(text => {
-            console.log('[v0] Сырой ответ простого теста:', text);
-            try {
-                const data = JSON.parse(text);
-                console.log('[v0] Результат простого теста:', data);
-                showDebugResults(JSON.stringify(data, null, 2));
-            } catch (e) {
-                console.error('[v0] Ошибка парсинга JSON:', e);
-                showDebugResults('Ошибка парсинга JSON. Сырой ответ:\n' + text);
-            }
-        })
-        .catch(error => {
-            console.error('[v0] Ошибка простого теста:', error);
-            showDebugResults('Ошибка сети: ' + error.message);
-        });
-}
-
-function testDaDataConfig() {
-    console.log('[v0] Тестирование конфигурации DaData...');
-    
-    fetch('/api/dadata-test-config')
-        .then(response => response.json())
-        .then(data => {
-            console.log('[v0] Результат тестирования конфигурации:', data);
-            showDebugResults(JSON.stringify(data, null, 2));
-        })
-        .catch(error => {
-            console.error('[v0] Ошибка тестирования конфигурации:', error);
-            showDebugResults('Ошибка: ' + error.message);
-        });
-}
-
-function testDaDataApi() {
-    console.log('[v0] Тестирование API DaData...');
-    
-    fetch('/api/dadata-test-api')
-        .then(response => response.json())
-        .then(data => {
-            console.log('[v0] Результат тестирования API:', data);
-            showDebugResults(JSON.stringify(data, null, 2));
-        })
-        .catch(error => {
-            console.error('[v0] Ошибка тестирования API:', error);
-            showDebugResults('Ошибка сети: ' + error.message);
-        });
-}
-
-function showDebugResults(text) {
-    const debugResults = document.getElementById('debug-results');
-    const debugOutput = document.getElementById('debug-output');
-    
-    debugOutput.textContent = text;
-    debugResults.style.display = 'block';
-}
 </script>
 @endsection

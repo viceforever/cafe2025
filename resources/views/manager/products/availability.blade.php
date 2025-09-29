@@ -15,10 +15,10 @@
                 @foreach($availability as $item)
                     <div class="col-md-6 mb-4">
                         <div class="card {{ $item['available'] ? 'border-success' : 'border-danger' }}">
-                            <div class="card-header {{ $item['available'] ? 'bg-success text-white' : 'bg-danger text-white' }}">
+                            <div class="card-header {{ $item['available'] ? 'bg-primary text-white' : 'bg-primary text-white' }}">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0">{{ $item['product']->name_product }}</h6>
-                                    <span class="badge {{ $item['available'] ? 'bg-primary text-white' : 'bg-light text-danger' }}">
+                                    <span class="badge {{ $item['available'] ? 'bg-success text-white' : 'bg-danger text-white' }}">
                                         {{ $item['available'] ? 'Доступно' : 'Недоступно' }}
                                     </span>
                                 </div>
@@ -52,10 +52,10 @@
 
                                 @if(!$item['available'] && count($item['missing_ingredients']) > 0)
                                     <hr>
-                                    <h6 class="text-danger mt-3">Недостающие ингредиенты:</h6>
+                                    <h6 class="text-dark mb-0 mt-3">Недостающие ингредиенты:</h6>
                                     <ul class="list-unstyled">
                                         @foreach($item['missing_ingredients'] as $ingredient)
-                                            <li class="text-danger">
+                                            <li class="text-dark mb-0 mt-3">
                                                 <i class="iconify" data-icon="mdi:alert-circle"></i>
                                                 {{ $ingredient->name }} 
                                                 (остаток: {{ $ingredient->quantity }} {{ $ingredient->unit }})

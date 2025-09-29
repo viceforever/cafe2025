@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -39,5 +40,31 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile.show')->with('success', 'Профиль успешно обновлен');
+    }
+
+    public function changePassword(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|string|min:8|confirmed',
+        ], [
+            'current_password.required' => 'Введите текущий пароль.',
+            'new_password.required' => 'Введите новый пароль.',
+            'new_password.min' => 'Новый пароль должен содержать минимум 8 символов.',
+            'new_password.confirmed' => 'Подтверждение пароля не совпадает.',
+        ]);
+
+        // Проверяем текущий пароль
+        if (!Hash::check($request->current_password, $user->password)) {
+            return redirect()->route('profile.show')->withErrors(['current_password' => 'Неверный текущий пароль.']);
+        }
+
+        // Обновляем пароль
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return redirect()->route('profile.show')->with('success', 'Пароль успешно изменен');
     }
 }

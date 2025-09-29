@@ -164,7 +164,12 @@ class DaDataController extends Controller
                 ],
                 'json' => [
                     'query' => $query,
-                    'count' => 10
+                    'count' => 10,
+                    'locations' => [
+                        [
+                            'city' => 'Иркутск'
+                        ]
+                    ]
                 ]
             ]);
 

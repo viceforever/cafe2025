@@ -50,7 +50,8 @@ class DaDataService
                 'language' => 'ru',
                 'locations' => [
                     [
-                        'country' => 'Россия'
+                        'country' => 'Россия',
+                        'city' => 'Иркутск' // добавляем фильтр по городу Иркутск
                     ]
                 ]
             ]);

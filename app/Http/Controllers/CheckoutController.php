@@ -32,13 +32,19 @@ class CheckoutController extends Controller
         ];
 
         if ($request->delivery_method === 'delivery') {
-            $validationRules['delivery_address'] = 'required|string|max:255';
+            $validationRules['delivery_city'] = 'required|string|in:Иркутск';
+            $validationRules['delivery_street'] = 'required|string|max:255';
+            $validationRules['delivery_house'] = 'required|string|max:10';
+            $validationRules['delivery_apartment'] = 'nullable|string|max:10';
         }
 
         $request->validate($validationRules, [
             'payment_method.required' => 'Выберите способ оплаты',
             'delivery_method.required' => 'Выберите способ получения',
-            'delivery_address.required' => 'Укажите адрес доставки',
+            'delivery_city.required' => 'Укажите город доставки',
+            'delivery_city.in' => 'Доставка осуществляется только по городу Иркутск',
+            'delivery_street.required' => 'Укажите улицу или микрорайон',
+            'delivery_house.required' => 'Укажите номер дома',
             'phone.required' => 'Укажите номер телефона',
         ]);
 
@@ -81,7 +87,23 @@ class CheckoutController extends Controller
             $order->status = 'В обработке';
             $order->payment_method = $request->payment_method;
             $order->delivery_method = $request->delivery_method;
-            $order->delivery_address = $request->delivery_method === 'delivery' ? $request->delivery_address : null;
+            
+            if ($request->delivery_method === 'delivery') {
+                $addressParts = [
+                    'г. ' . $request->delivery_city,
+                    $request->delivery_street,
+                    'д. ' . $request->delivery_house
+                ];
+                
+                if ($request->delivery_apartment) {
+                    $addressParts[] = 'кв. ' . $request->delivery_apartment;
+                }
+                
+                $order->delivery_address = implode(', ', $addressParts);
+            } else {
+                $order->delivery_address = null;
+            }
+            
             $order->phone = $request->phone;
             $order->notes = $request->notes;
             $order->save();
