@@ -24,6 +24,65 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chilanka&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <!-- Added custom styles for toast notifications -->
+  <style>
+    .toast-container {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      z-index: 9999;
+    }
+    
+    .custom-toast {
+      min-width: 300px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      border-left: 4px solid #28a745;
+      animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    .custom-toast .toast-header {
+      background: transparent;
+      border-bottom: none;
+      padding: 12px 16px 8px;
+    }
+    
+    .custom-toast .toast-body {
+      padding: 8px 16px 12px;
+      color: #333;
+      font-size: 0.95rem;
+    }
+    
+    .toast-icon {
+      width: 24px;
+      height: 24px;
+      background: #28a745;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+    }
+    
+    .toast-icon svg {
+      width: 14px;
+      height: 14px;
+      fill: white;
+    }
+  </style>
 </head>
 
 <body>
@@ -36,6 +95,15 @@
           d="M12 19a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm5 0a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm0-4a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm-5 0a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm7-12h-1V2a1 1 0 0 0-2 0v1H8V2a1 1 0 0 0-2 0v1H5a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3Zm1 17a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9h16Zm0-11H4V6a1 1 0 0 1 1-1h1v1a1 1 0 0 0 2 0V5h8v1a1 1 0 0 0 2 0V5h1a1 1 0 0 1 1 1ZM7 15a1 1 0 1 0-1-1a1 1 0 0 0 1 1Zm0 4a1 1 0 1 0-1-1a1 1 0 0 0 1 1Z" />
       </symbol>
       <!-- ... existing symbols ... -->
+      <symbol xmlns="http://www.w3.org/2000/svg" id="plus" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 11h-6V5a1 1 0 0 0-2 0v6H5a1 1 0 0 0 0 2h6v6a1 1 0 0 0 2 0v-6h6a1 1 0 0 0 0-2Z"/>
+      </symbol>
+      <symbol xmlns="http://www.w3.org/2000/svg" id="minus" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 11H5a1 1 0 0 0 0 2h14a1 1 0 0 0 0-2Z"/>
+      </symbol>
+      <symbol xmlns="http://www.w3.org/2000/svg" id="trash" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M10 18a1 1 0 0 0 1-1v-6a1 1 0 0 0-2 0v6a1 1 0 0 0 1 1ZM20 6h-4V5a3 3 0 0 0-3-3h-2a3 3 0 0 0-3 3v1H4a1 1 0 0 0 0 2h1v11a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8h1a1 1 0 0 0 0-2ZM10 5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1h-4Zm7 14a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V8h10Zm-3-1a1 1 0 0 0 1-1v-6a1 1 0 0 0-2 0v6a1 1 0 0 0 1 1Z"/>
+      </symbol>
     </defs>
   </svg>
 
@@ -169,6 +237,26 @@
     </div>
   </header>
 
+  <!-- Added toast notification container -->
+  <div class="toast-container">
+    @if(session('success'))
+      <div class="toast custom-toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
+        <div class="toast-header">
+          <div class="toast-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+            </svg>
+          </div>
+          <strong class="me-auto">Успешно</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          {{ session('success') }}
+        </div>
+      </div>
+    @endif
+  </div>
+
   @yield('main_content')
   @yield('content')
 
@@ -192,6 +280,7 @@
   <script src="{{ asset('js/plugins.js') }}"></script>
   <script src="{{ asset('js/script.js') }}"></script>
   <script src="{{ asset('js/iconify.js') }}"></script>
+  
   <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Инициализация всех dropdown элементов
@@ -200,7 +289,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return new bootstrap.Dropdown(dropdownToggleEl);
     });
     
-    console.log('[v0] Bootstrap dropdowns initialized:', dropdownList.length);
+    // Инициализация toast уведомлений
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    var toastList = toastElList.map(function(toastEl) {
+        var toast = new bootstrap.Toast(toastEl);
+        toast.show();
+        return toast;
+    });
 });
 
 document.getElementById('logoutLink').addEventListener('click', function(e) {

@@ -64,7 +64,7 @@
                                                 <strong>Время работы:</strong> {{ $daySchedule->formatted_time }}
                                             </p>
                                             <p class="mb-1">
-                                                <strong>Продолжительность:</strong> {{ $daySchedule->duration }} часов
+                                                <strong>Продолжительность:</strong> {{ $daySchedule->duration }}
                                             </p>
                                             @if($daySchedule->notes)
                                                 <p class="mb-1">

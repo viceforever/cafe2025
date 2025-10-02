@@ -37,23 +37,23 @@
                                         </div>
                                     </td>
                                     <td class="py-4 align-middle">
-                                        <div class="input-group product-qty align-items-center w-50">
+                                        <div class="d-flex align-items-center justify-content-center gap-2">
                                             <form action="{{ route('cart.update', $id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 <input type="hidden" name="action" value="decrease">
-                                                <button type="submit" class="btn btn-light btn-number">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;">
                                                     <svg width="16" height="16">
                                                         <use xlink:href="#minus"></use>
                                                     </svg>
                                                 </button>
                                             </form>
 
-                                            <input type="text" id="quantity-{{ $id }}" name="quantity" class="form-control input-number text-center p-2 mx-1" value="{{ $item['quantity'] }}" readonly>
+                                            <input type="text" id="quantity-{{ $id }}" name="quantity" class="form-control text-center" style="width: 60px; padding: 6px;" value="{{ $item['quantity'] }}" readonly>
                                             
                                             <form action="{{ route('cart.update', $id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 <input type="hidden" name="action" value="increase">
-                                                <button type="submit" class="btn btn-light btn-number">
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; padding: 0;">
                                                     <svg width="16" height="16">
                                                         <use xlink:href="#plus"></use>
                                                     </svg>

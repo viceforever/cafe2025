@@ -24,11 +24,19 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'phone' => 'required|string|unique:users,phone',
-            'password' => 'required|string|min:6',
+            'first_name' => 'required|string|max:255|regex:/^[a-zA-Zа-яА-ЯёЁ]+$/u',
+            'last_name' => 'required|string|max:255|regex:/^[a-zA-Zа-яА-ЯёЁ]+$/u',
+            'phone' => 'required|string|min:11|max:11|unique:users,phone|regex:/^[0-9]+$/',
+            'password' => 'required|string|min:8',
             'role' => ['required', Rule::in(['client', 'manager', 'admin'])],
+        ], [
+            'first_name.regex' => 'Поле "Имя" может содержать только буквы.',
+            'last_name.regex' => 'Поле "Фамилия" может содержать только буквы.',
+            'phone.regex' => 'Поле "Телефон" может содержать только цифры.',
+            'phone.min' => 'Поле "Телефон" должно содержать ровно 11 цифр.',
+            'phone.max' => 'Поле "Телефон" должно содержать ровно 11 цифр.',
+            'phone.unique' => 'Номер телефона уже зарегистрирован.',
+            'password.min' => 'Минимальная длина пароля 8 символов.',
         ]);
 
         User::create([
@@ -51,11 +59,19 @@ class EmployeeController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'phone' => ['required', 'string', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:6',
+            'first_name' => 'required|string|max:255|regex:/^[a-zA-Zа-яА-ЯёЁ]+$/u',
+            'last_name' => 'required|string|max:255|regex:/^[a-zA-Zа-яА-ЯёЁ]+$/u',
+            'phone' => ['required', 'string', 'min:11', 'max:11', 'regex:/^[0-9]+$/', Rule::unique('users')->ignore($user->id)],
+            'password' => 'nullable|string|min:8',
             'role' => ['required', Rule::in(['client', 'manager', 'admin'])],
+        ], [
+            'first_name.regex' => 'Поле "Имя" может содержать только буквы.',
+            'last_name.regex' => 'Поле "Фамилия" может содержать только буквы.',
+            'phone.regex' => 'Поле "Телефон" может содержать только цифры.',
+            'phone.min' => 'Поле "Телефон" должно содержать ровно 11 цифр.',
+            'phone.max' => 'Поле "Телефон" должно содержать ровно 11 цифр.',
+            'phone.unique' => 'Номер телефона уже зарегистрирован.',
+            'password.min' => 'Минимальная длина пароля 8 символов.',
         ]);
 
         $data = [

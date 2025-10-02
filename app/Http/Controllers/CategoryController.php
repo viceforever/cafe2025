@@ -15,7 +15,7 @@ class CategoryController extends Controller
             abort(403,'У вас нет прав доступа к этой странице.');
         }
 
-        $categories = CategoryProduct::all();
+        $categories = CategoryProduct::withCount('products')->get();
         return view('admin.categories.index', compact('categories'));
     }
 
@@ -77,7 +77,14 @@ class CategoryController extends Controller
             abort(403,'У вас нет прав доступа к этой странице.');
         }
 
+        $productCount = $category->products()->count();
+        
         $category->delete();
-        return redirect()->route('admin.categories.index')->with('success', 'Категория успешно удалена');
+        
+        $message = $productCount > 0 
+            ? "Категория успешно удалена вместе с {$productCount} товар(ами)"
+            : 'Категория успешно удалена';
+            
+        return redirect()->route('admin.categories.index')->with('success', $message);
     }
 }

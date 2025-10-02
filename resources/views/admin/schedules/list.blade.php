@@ -94,7 +94,7 @@
                                             <strong>{{ $schedule->formatted_time }}</strong>
                                         </td>
                                         <td>
-                                            <span class="badge bg-primary text-white">{{ $schedule->duration }}ч</span>
+                                            <span class="badge bg-primary text-white">{{ $schedule->duration }}</span>
                                         </td>
                                         <td>
                                             @if($schedule->notes)

@@ -62,7 +62,7 @@
                 <div class="isotope-container row">
                     @foreach($products[$category->id] as $product)
                         <div class="item cat col-md-4 col-lg-3 my-4">
-                            <div class="card position-relative" style="height: 480px;">
+                            <div class="card position-relative" style="height: 520px;">
                                 <a href="{{ route('product.show', $product->id) }}">
                                     <div class="product-image-container" style="height: 280px; overflow: hidden; border-radius: 1rem;">
                                         <img src="{{ asset('storage/' . $product->img_product) }}" 
@@ -71,28 +71,20 @@
                                              alt="{{ $product->name_product }}">
                                     </div>
                                 </a>
-                                <div class="card-body p-0 d-flex flex-column" style="height: 200px;">
+                                <div class="card-body p-0 d-flex flex-column" style="height: 240px;">
                                     <a href="{{ route('product.show', $product->id) }}">
                                         <h3 class="card-title pt-4 m-0" style="height: 60px; overflow: hidden;">{{ $product->name_product }}</h3>
                                     </a>
                                     <div class="card-text flex-grow-1 d-flex flex-column justify-content-between">
-                                        <span class="rating secondary-font" style="height: 50px; overflow: hidden; font-size: 0.9rem;">
-                                            {{ Str::limit($product->description_product, 80) }}
+                                        <span class="rating secondary-font mb-3" style="height: 57px; overflow: hidden; font-size: 0.85rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.5; text-overflow: ellipsis; word-wrap: break-word; color: #6c757d;">
+                                            {{ $product->description_product }}
                                         </span>
                                         <div class="mt-auto">
                                             <h3 class="secondary-font text-primary mb-2">{{ $product->price_product }} руб</h3>
-                                            <div class="d-flex flex-wrap">
-                                                <form action="{{ route('cart.add', $product->id) }}" method="POST" id="addToCartForm">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-primary btn-sm">Добавить в корзину</button>
-                                                </form>
-                                                @if(session('success') && session('product_id') == $product->id)
-                                                    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                                                        {{ session('success') }}
-                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                                    </div>
-                                                @endif
-                                            </div>
+                                            <form action="{{ route('cart.add', $product->id) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-primary btn-sm w-100" style="border-radius: 0.5rem; padding: 0.6rem;">Добавить в корзину</button>
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
@@ -174,7 +166,7 @@
                     <iconify-icon icon="mingcute:dinner-line" class="quote-icon text-primary"></iconify-icon>
                   </div>
                   <div class="col-md-10 mt-md-5 p-5 pt-0 pt-md-5">
-                    <p class="testimonial-content fs-2">Мы разработали более 25 разновидностей фирменных блюд с неповторимым вкусом и продолжаем расширять ассортимент.</p>
+                    <p class="testimonial-content fs-2">Мы разработали более {{ $totalProducts }} разновидностей фирменных блюд с неповторимым вкусом и продолжаем расширять ассортимент.</p>
                   </div>
                 </div>
               </div>

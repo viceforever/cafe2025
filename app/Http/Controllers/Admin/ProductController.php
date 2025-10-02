@@ -4,7 +4,7 @@ public function store(Request $request)
         'name_product' => 'required|string|max:255',
         'description_product' => 'required|string',
         'price_product' => 'required|numeric|min:0',
-        'img_product' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'img_product' => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
         'id_category' => 'required|exists:categories,id',
         'ingredients' => 'required|array|min:1',
         'ingredients.*.id' => 'required|exists:ingredients,id',

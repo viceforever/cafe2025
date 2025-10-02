@@ -33,10 +33,7 @@ class CartController extends Controller
         }
         
         session()->put('cart', $cart);
-        return redirect()->back()->with([
-            'success' => 'Товар добавлен в корзину!',
-            'product_id' => $product->id,
-        ]);
+        return redirect()->back()->with('success', 'Товар добавлен в корзину!');
     }
 
     public function remove($id)

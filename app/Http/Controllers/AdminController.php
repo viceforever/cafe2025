@@ -41,7 +41,7 @@ class AdminController extends Controller
         }
         $request->validate([
             'name_product' => 'required|string|max:255|unique:products,name_product',
-            'description_product' => 'required|string',
+            'description_product' => 'required|string|max:300',
             'price_product' => 'required|numeric|min:0',
             'img_product' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'id_category' => 'required|exists:category_products,id',
@@ -50,6 +50,7 @@ class AdminController extends Controller
             'ingredients.*.quantity' => 'required|numeric|min:0.01',
         ],[
             'name_product.unique' => 'Товар с таким названием уже существует.',
+            'description_product.max' => 'Описание товара не должно превышать 300 символов',
             'img_product.required' => 'Изображение товара обязательно для загрузки',
             'img_product.image' => 'Файл должен быть изображением',
             'img_product.mimes' => 'Изображение должно быть в формате: jpeg, png, jpg, gif',
@@ -110,18 +111,19 @@ class AdminController extends Controller
                 'max:255',
                 Rule::unique('products')->ignore($product->id),
             ],
-            'description_product' => 'required|string',
+            'description_product' => 'required|string|max:300',
             'price_product' => 'required|numeric|min:0',
-            'img_product' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'img_product' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
             'id_category' => 'required|exists:category_products,id',
             'ingredients' => 'required|array|min:1',
             'ingredients.*.id' => 'required|exists:ingredients,id',
             'ingredients.*.quantity' => 'required|numeric|min:0.01',
         ],[
             'name_product.unique' => 'Товар с таким названием уже существует.',
+            'description_product.max' => 'Описание товара не должно превышать 300 символов',
             'img_product.image' => 'Файл должен быть изображением',
             'img_product.mimes' => 'Изображение должно быть в формате: jpeg, png, jpg, gif',
-            'img_product.max' => 'Размер изображения не должен превышать 2MB',
+            'img_product.max' => 'Размер изображения не должен превышать 4MB',
             'ingredients.required' => 'Необходимо добавить хотя бы один ингредиент',
             'ingredients.min' => 'Необходимо добавить хотя бы один ингредиент',
         ]);

@@ -10,13 +10,15 @@ class ProductController extends Controller
     {
         $categories = CategoryProduct::all(); // все категории
         $products = Product::with('category')->get()->groupBy('id_category');
-        return view('products.index', compact('categories','products'));
+        $totalProducts = Product::count();
+        return view('products.index', compact('categories','products', 'totalProducts'));
     }
 
     public function search(Request $request)
     {
         $query = $request->input('query');
         $categories = CategoryProduct::all(); // все категории
+        $totalProducts = Product::count();
 
         if ($query){
             $products = Product::where('name_product', 'LIKE', "%{$query}%")
@@ -27,7 +29,7 @@ class ProductController extends Controller
         } else{
             $products = Product::with('category')->get()->groupBy('id_category');
         }
-        return view('products.index', compact('products','categories','query',));
+        return view('products.index', compact('products','categories','query', 'totalProducts'));
     }
 
     public function show($id)

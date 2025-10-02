@@ -38,9 +38,16 @@ class Schedule extends Model
     public function getDurationAttribute()
     {
         if ($this->start_time && $this->end_time) {
-            return $this->start_time->diffInHours($this->end_time);
+            $totalMinutes = $this->start_time->diffInMinutes($this->end_time);
+            $hours = floor($totalMinutes / 60);
+            $minutes = $totalMinutes % 60;
+            
+            if ($minutes > 0) {
+                return $hours . 'ч ' . $minutes . 'мин';
+            }
+            return $hours . 'ч';
         }
-        return 0;
+        return '0ч';
     }
 
     public function getFormattedTimeAttribute()
