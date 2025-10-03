@@ -25,7 +25,6 @@
                             <tbody>
                                 @forelse($shifts as $shift)
                                     <tr>
-                                        <!-- выводим время напрямую из БД как строку без преобразований -->
                                         <td>{{ date('d.m.Y', strtotime($shift->start_time)) }}</td>
                                         <td>{{ date('H:i', strtotime($shift->start_time)) }}</td>
                                         <td>
@@ -42,8 +41,9 @@
                                                 В процессе
                                             @endif
                                         </td>
-                                        <td>{{ $shift->total_orders }}</td>
-                                        <td>{{ number_format($shift->total_revenue, 2) }} ₽</td>
+                                        {{-- Используем динамически подсчитанные значения вместо полей из БД --}}
+                                        <td>{{ $shift->total_orders ?? 0 }}</td>
+                                        <td>{{ number_format($shift->total_revenue ?? 0, 2) }} ₽</td>
                                         <td>
                                             <span class="badge bg-{{ $shift->isActive() ? 'success' : 'secondary' }}">
                                                 {{ $shift->isActive() ? 'Активна' : 'Завершена' }}

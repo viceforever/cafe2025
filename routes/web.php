@@ -125,6 +125,9 @@ Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':admin'])->pref
     Route::get('/reports/sales/export/{format}', [ReportsController::class, 'exportSalesReport'])->name('reports.sales.export');
     Route::get('/reports/ingredients/export/{format}', [ReportsController::class, 'exportIngredientsReport'])->name('reports.ingredients.export');
 
+    Route::get('/shifts', [\App\Http\Controllers\Admin\ShiftHistoryController::class, 'index'])->name('shifts.index');
+    Route::get('/shifts/{shift}', [\App\Http\Controllers\Admin\ShiftHistoryController::class, 'show'])->name('shifts.show');
+
     // Маршрут для загружаемой картинки
     Route::get('/images/{filename}', function ($filename) {
         return response()->file(public_path('images/' . $filename));

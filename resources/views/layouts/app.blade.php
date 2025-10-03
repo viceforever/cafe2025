@@ -193,6 +193,7 @@
                           <li><a class="dropdown-item" href="{{ route('admin.users.index') }}">Управление пользователями</a></li>
                           <li><a class="dropdown-item" href="{{ route('admin.ingredients.index') }}">Управление ингредиентами</a></li>
                           <li><a class="dropdown-item" href="{{ route('admin.schedules.index') }}">Графики работы</a></li>
+                          <li><a class="dropdown-item" href="{{ route('admin.shifts.index') }}">История смен</a></li>
                           <li><hr class="dropdown-divider"></li>
                           <li><a class="dropdown-item" href="{{ route('admin.analytics.index') }}">Аналитика</a></li>
                           <li><a class="dropdown-item" href="{{ route('admin.reports.index') }}">Отчеты</a></li>

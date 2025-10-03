@@ -16,7 +16,6 @@
                             <h5>Информация о смене</h5>
                         </div>
                         <div class="card-body">
-                            <!-- выводим время напрямую из БД как строку без преобразований -->
                             <p><strong>Дата:</strong> {{ date('d.m.Y', strtotime($shift->start_time)) }}</p>
                             <p><strong>Время начала:</strong> {{ date('H:i', strtotime($shift->start_time)) }}</p>
                             <p><strong>Время окончания:</strong> 
@@ -47,12 +46,13 @@
                             <h5>Статистика</h5>
                         </div>
                         <div class="card-body">
-                            <p><strong>Всего заказов:</strong> {{ $shift->total_orders }}</p>
-                            <p><strong>Общая выручка:</strong> {{ number_format($shift->total_revenue, 2) }} ₽</p>
-                            <p><strong>Наличными:</strong> {{ number_format($shift->cash_sales, 2) }} ₽</p>
-                            <p><strong>Картой:</strong> {{ number_format($shift->card_sales, 2) }} ₽</p>
-                            @if($shift->total_orders > 0)
-                                <p><strong>Средний чек:</strong> {{ number_format($shift->total_revenue / $shift->total_orders, 2) }} ₽</p>
+                            {{-- Используем динамически вычисленную статистику из контроллера --}}
+                            <p><strong>Всего заказов:</strong> {{ $stats['total_orders'] }}</p>
+                            <p><strong>Общая выручка:</strong> {{ number_format($stats['total_revenue'], 2) }} ₽</p>
+                            <p><strong>Наличными:</strong> {{ number_format($stats['cash_sales'], 2) }} ₽</p>
+                            <p><strong>Картой:</strong> {{ number_format($stats['card_sales'], 2) }} ₽</p>
+                            @if($stats['total_orders'] > 0)
+                                <p><strong>Средний чек:</strong> {{ number_format($stats['total_revenue'] / $stats['total_orders'], 2) }} ₽</p>
                             @endif
                         </div>
                     </div>
@@ -82,7 +82,6 @@
                                     @foreach($orders as $order)
                                         <tr>
                                             <td>#{{ $order->id }}</td>
-                                            <!-- выводим время заказа напрямую из БД -->
                                             <td>{{ date('H:i', strtotime($order->created_at)) }}</td>
                                             <td>{{ $order->total_amount }} ₽</td>
                                             <td>{{ $order->payment_method_text }}</td>

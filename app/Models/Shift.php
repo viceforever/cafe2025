@@ -40,6 +40,14 @@ class Shift extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function getActiveOrdersAttribute()
+    {
+        if ($this->relationLoaded('orders')) {
+            return $this->orders->where('status', '!=', 'Отменен');
+        }
+        return collect();
+    }
+
     public function getDurationAttribute()
     {
         if ($this->start_time && $this->end_time) {
@@ -66,13 +74,13 @@ class Shift extends Model
 
     public function calculateStats()
     {
-        $orders = $this->orders()->get();
+        $orders = $this->orders()->where('status', '!=', 'Отменен')->get();
 
         DB::table('shifts')
             ->where('id', $this->id)
             ->update([
                 'total_orders' => $orders->count(),
-                'total_revenue' => $orders->where('payment_method', 'cash')->sum('total_amount') + $orders->where('payment_method', 'card')->sum('total_amount'),
+                'total_revenue' => $orders->sum('total_amount'),
                 'cash_sales' => $orders->where('payment_method', 'cash')->sum('total_amount'),
                 'card_sales' => $orders->where('payment_method', 'card')->sum('total_amount')
             ]);
