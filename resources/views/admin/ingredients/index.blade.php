@@ -13,10 +13,6 @@
                 </a>
             </div>
 
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
-
             @if($lowStockIngredients->count() > 0)
                 <div class="alert alert-warning">
                     <h5><i class="iconify" data-icon="mdi:alert"></i> Низкие остатки:</h5>

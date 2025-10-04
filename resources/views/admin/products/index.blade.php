@@ -7,12 +7,6 @@
             <h1>Управление товарами</h1>
             <a href="{{ route('admin.products.create') }}" class="btn btn-primary mb-3">Создать новый товар</a>
 
-            @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <div class="table-responsive">
                 <table class="table">
                     <thead>

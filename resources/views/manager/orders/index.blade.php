@@ -6,12 +6,6 @@
         <div class="col-12">
             <h1>Управление заказами</h1>
 
-            @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <div class="card mb-3">
                 <div class="card-body">
                     <form method="GET" action="{{ route('manager.orders') }}" class="row g-3">

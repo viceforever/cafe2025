@@ -21,10 +21,6 @@
                 </div>
             </div>
 
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
-
             @if(session('error'))
                 <div class="alert alert-danger">{{ session('error') }}</div>
             @endif
@@ -49,7 +45,6 @@
                                 <i class="iconify me-2" data-icon="mdi:clock-check"></i>
                                 Статистика активной смены
                             </h5>
-                            <!-- убираю format() и использую date() для строки -->
                             <small>Начата в {{ date('H:i', strtotime($activeShift->start_time)) }}</small>
                         </div>
                         <div class="card-body">
@@ -62,31 +57,31 @@
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
-                                        <h4 class="text-success mb-1" id="shift-revenue">{{ number_format($shiftStats['total_revenue'], 0) }} ₽</h4>
+                                        <h4 class="text-primary mb-1" id="shift-revenue">{{ number_format($shiftStats['total_revenue'], 0) }} ₽</h4>
                                         <small class="text-muted">Общая выручка</small>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
-                                        <h4 class="text-info mb-1" id="shift-cash">{{ number_format($shiftStats['cash_revenue'], 0) }} ₽</h4>
+                                        <h4 class="text-primary mb-1" id="shift-cash">{{ number_format($shiftStats['cash_revenue'], 0) }} ₽</h4>
                                         <small class="text-muted">Наличными</small>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
-                                        <h4 class="text-warning mb-1" id="shift-card">{{ number_format($shiftStats['card_revenue'], 0) }} ₽</h4>
+                                        <h4 class="text-primary mb-1" id="shift-card">{{ number_format($shiftStats['card_revenue'], 0) }} ₽</h4>
                                         <small class="text-muted">Картой</small>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
-                                        <h4 class="text-success mb-1" id="shift-completed">{{ $shiftStats['completed_orders'] }}</h4>
+                                        <h4 class="text-primary mb-1" id="shift-completed">{{ $shiftStats['completed_orders'] }}</h4>
                                         <small class="text-muted">Выполнено</small>
                                     </div>
                                 </div>
                                 <div class="col-md-2">
                                     <div class="text-center">
-                                        <h4 class="text-danger mb-1" id="shift-pending">{{ $shiftStats['pending_orders'] }}</h4>
+                                        <h4 class="text-primary mb-1" id="shift-pending">{{ $shiftStats['pending_orders'] }}</h4>
                                         <small class="text-muted">В работе</small>
                                     </div>
                                 </div>

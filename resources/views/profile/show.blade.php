@@ -8,12 +8,6 @@
         <div class="col-12">
             <h1>Профиль пользователя</h1>
             
-            @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <div class="row">
                 <div class="col-md-6">
                     <ul class="nav nav-tabs mb-3" id="profileTabs" role="tablist">

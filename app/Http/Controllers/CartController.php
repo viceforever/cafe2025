@@ -52,8 +52,12 @@ class CartController extends Controller
         if(isset($cart[$id])) {
             if($request->input('action') === 'increase') {
                 $cart[$id]['quantity']++;
-            } elseif($request->input('action') === 'decrease' && $cart[$id]['quantity'] > 1) {
-                $cart[$id]['quantity']--;
+            } elseif($request->input('action') === 'decrease') {
+                if($cart[$id]['quantity'] <= 1) {
+                    unset($cart[$id]);
+                } else {
+                    $cart[$id]['quantity']--;
+                }
             }
             session()->put('cart', $cart);
         }

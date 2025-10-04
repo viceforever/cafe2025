@@ -22,8 +22,8 @@
                 <img src="images/ornot.png" class="img-fluid">
               </div>
               <div class="content-wrapper col-md-7 p-5 mb-5">
-                <div class="secondary-font text-primary text-uppercase mb-4">Целых 10% =)</div>
-                <h2 class="banner-title display-1 fw-normal">Дарим скидку <span class="text-primary"><br>На первый заказ<br></span>
+                <div class="secondary-font text-primary text-uppercase mb-4">Можно использовать для оплаты 50% от суммы заказа</div>
+                <h2 class="banner-title display-1 fw-normal">Дарим бонусы <span class="text-primary"><br>При регистрации!<br></span>
                 </h2>
               </div>
             </div>
@@ -34,7 +34,7 @@
                 <img src="images/ornot.png" class="img-fluid">
               </div>
               <div class="content-wrapper col-md-7 p-5 mb-5">
-                <div class="secondary-font text-primary text-uppercase mb-4">Не текст</div>
+                <div class="secondary-font text-primary text-uppercase mb-4">Маленький текст</div>
                 <h2 class="banner-title display-1 fw-normal">Текст <span class="text-primary">еще текст</span>
                 </h2>
               </div>

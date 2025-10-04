@@ -9,12 +9,6 @@
             <h1>Управление категориями</h1>
             <a href="{{ route('admin.categories.create') }}" class="btn btn-primary mb-3">Создать новую категорию</a>
 
-            @if (session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
             <div class="table-responsive">
                 <table class="table">
                     <thead>
