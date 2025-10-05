@@ -117,17 +117,19 @@ class ReportsController extends Controller
 
         foreach ($ingredients as $ingredient) {
             $usage = $usageData[$ingredient->id] ?? 0;
-            $ingredient->usage_period = $usage;
-            $ingredient->cost_period = $usage * $ingredient->cost_per_unit;
+            $ingredient->setAttribute('usage_period', (float) $usage);
+            $ingredient->setAttribute('cost_period', (float) $usage * $ingredient->cost_per_unit);
         }
 
         // Общая статистика
         $totalIngredients = $ingredients->count();
-        $lowStockCount = $ingredients->filter(function($ingredient) {
-            return $ingredient->quantity <= $ingredient->min_quantity;
-        })->count();
-        $totalCost = $ingredients->sum('cost_period');
-        $totalUsage = $ingredients->sum('usage_period');
+        $lowStockCount = $ingredients->where('quantity', '<=', DB::raw('min_quantity'))->count();
+        $totalCost = $ingredients->sum(function($ing) {
+            return $ing->getAttribute('cost_period') ?? 0;
+        });
+        $totalUsage = $ingredients->sum(function($ing) {
+            return $ing->getAttribute('usage_period') ?? 0;
+        });
 
         return view('admin.reports.ingredients', compact(
             'ingredients', 'startDate', 'endDate', 'lowStock', 'minQuantity',
@@ -238,16 +240,22 @@ class ReportsController extends Controller
 
         $ingredients = $query->get();
 
+        $usageData = $this->getIngredientsUsageBatch($ingredients->pluck('id'), $startDate, $endDate);
+
         foreach ($ingredients as $ingredient) {
-            $usage = $this->getIngredientUsageInPeriod($ingredient->id, $startDate, $endDate);
-            $ingredient->usage_period = $usage;
-            $ingredient->cost_period = $usage * $ingredient->cost_per_unit;
+            $usage = $usageData[$ingredient->id] ?? 0;
+            $ingredient->setAttribute('usage_period', (float) $usage);
+            $ingredient->setAttribute('cost_period', (float) $usage * $ingredient->cost_per_unit);
         }
 
         $totalIngredients = $ingredients->count();
         $lowStockCount = $ingredients->where('quantity', '<=', DB::raw('min_quantity'))->count();
-        $totalCost = $ingredients->sum('cost_period');
-        $totalUsage = $ingredients->sum('usage_period');
+        $totalCost = $ingredients->sum(function($ing) {
+            return $ing->getAttribute('cost_period') ?? 0;
+        });
+        $totalUsage = $ingredients->sum(function($ing) {
+            return $ing->getAttribute('usage_period') ?? 0;
+        });
 
         return compact('ingredients', 'startDate', 'endDate', 'totalIngredients', 'lowStockCount', 'totalCost', 'totalUsage');
     }
@@ -295,15 +303,17 @@ class ReportsController extends Controller
         $filename = 'sales-report-' . $startDate . '-to-' . $endDate . '.csv';
         
         $headers = [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
         $callback = function() use ($data) {
             $file = fopen('php://output', 'w');
             
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
             // Заголовки CSV
-            fputcsv($file, ['№ заказа', 'Дата', 'Клиент', 'Телефон', 'Статус', 'Сумма', 'Товары']);
+            fputcsv($file, ['№ заказа', 'Дата', 'Клиент', 'Телефон', 'Статус', 'Сумма', 'Товары'], ';');
             
             foreach ($data['orders'] as $order) {
                 $items = $order->orderItems->map(function($item) {
@@ -321,7 +331,7 @@ class ReportsController extends Controller
                     $order->status,
                     number_format($order->total_amount, 2),
                     $items
-                ]);
+                ], ';');
             }
             
             fclose($file);
@@ -335,26 +345,31 @@ class ReportsController extends Controller
         $filename = 'ingredients-report-' . $startDate . '-to-' . $endDate . '.csv';
         
         $headers = [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
         $callback = function() use ($data) {
             $file = fopen('php://output', 'w');
             
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
             // Заголовки CSV
-            fputcsv($file, ['Ингредиент', 'Текущий остаток', 'Мин. остаток', 'Единица измерения', 'Стоимость за единицу', 'Использовано за период', 'Стоимость использования']);
+            fputcsv($file, ['Ингредиент', 'Текущий остаток', 'Мин. остаток', 'Единица измерения', 'Стоимость за единицу', 'Использовано за период', 'Стоимость использования'], ';');
             
             foreach ($data['ingredients'] as $ingredient) {
+                $usagePeriod = (float) ($ingredient->getAttribute('usage_period') ?? 0);
+                $costPeriod = (float) ($ingredient->getAttribute('cost_period') ?? 0);
+                
                 fputcsv($file, [
-                    $ingredient->name_ingredient,
+                    $ingredient->name,
                     $ingredient->quantity,
                     $ingredient->min_quantity,
                     $ingredient->unit,
                     number_format($ingredient->cost_per_unit, 2),
-                    $ingredient->usage_period,
-                    number_format($ingredient->cost_period, 2)
-                ]);
+                    number_format($usagePeriod, 2),
+                    number_format($costPeriod, 2)
+                ], ';');
             }
             
             fclose($file);

@@ -49,7 +49,7 @@
             @foreach($ingredients as $ingredient)
             <tr class="{{ $ingredient->quantity <= $ingredient->min_quantity ? 'low-stock' : '' }}">
                 <!-- исправил обращение к полю названия ингредиента -->
-                <td>{{ $ingredient->name_ingredient }}</td>
+                <td>{{ $ingredient->name }}</td>
                 <td>{{ $ingredient->unit }}</td>
                 <td>{{ $ingredient->quantity }}</td>
                 <td>{{ $ingredient->min_quantity }}</td>
