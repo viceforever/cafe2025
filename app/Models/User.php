@@ -14,7 +14,7 @@ class User extends Authenticatable
         'first_name',
         'phone',
         'password',
-        'role', // добавляем role в fillable
+        'role',
     ];
 
     protected $hidden = [
@@ -23,7 +23,7 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'role' => 'string', // заменяем is_admin на role
+        'role' => 'string',
     ];
 
     public function orders()

@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('first_name'); 
             $table->string('phone')->unique(); 
             $table->string('password');
+            $table->enum('role', ['client', 'manager', 'admin'])->default('client');
             $table->rememberToken();
-            $table->boolean('is_admin')->default(0); // Роль по умолчанию 0
             $table->timestamps();
         });
 

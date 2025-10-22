@@ -6,6 +6,14 @@
         <div class="col-12">
             <h1>Управление заказами</h1>
 
+            {{-- Удалены зеленые alert-блоки, оставлены только всплывающие уведомления --}}
+            @if(session('error'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Ошибка!</strong> {{ session('error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
             <div class="card mb-3">
                 <div class="card-body">
                     <form method="GET" action="{{ route('manager.orders') }}" class="row g-3">

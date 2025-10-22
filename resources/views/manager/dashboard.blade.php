@@ -273,13 +273,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('hiddenStartTime').value = shiftStartTime.toISOString();
             document.getElementById('hiddenEndTime').value = now.toISOString();
             document.getElementById('hiddenDurationMinutes').value = durationMinutes;
-            
-            console.log('[v0] Рассчитанные данные смены:', {
-                startTime: shiftStartTime.toISOString(),
-                endTime: now.toISOString(),
-                durationMinutes: durationMinutes,
-                display: startTimeStr + ' - ' + endTimeStr + ' (' + durationStr + ')'
-            });
         });
     }
 

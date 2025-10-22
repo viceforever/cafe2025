@@ -180,7 +180,7 @@
                   </li>
 
                   <!-- Обновленное меню для разных ролей -->
-                  @if(Auth::user() && Auth::user()->isAdmin())
+                  @if(Auth::check() && Auth::user()->isAdmin())
                     <li class="nav-item dropdown">
                       <a class="nav-link me-3 dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                           Админ панель
@@ -199,7 +199,7 @@
                           <li><a class="dropdown-item" href="{{ route('admin.reports.index') }}">Отчеты</a></li>
                       </ul>
                     </li>
-                  @elseif(Auth::user() && Auth::user()->isManager())
+                  @elseif(Auth::check() && Auth::user()->isManager())
                     <li class="nav-item dropdown">
                       <a class="nav-link me-3 dropdown-toggle" href="#" id="managerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                           Панель менеджера

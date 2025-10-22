@@ -16,6 +16,11 @@ class CheckoutController extends Controller
     public function index()
     {
         $cartItems = session()->get('cart', []);
+        
+        if (empty($cartItems)) {
+            return redirect()->route('cart.index')->with('error', 'Ваша корзина пуста. Добавьте товары перед оформлением заказа.');
+        }
+        
         $total = $this->calculateTotal($cartItems);
 
         return view('checkout.index', compact('cartItems', 'total'));
@@ -54,9 +59,12 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Ваша корзина пуста');
         }
 
+        $productIds = array_keys($cart);
+        $products = Product::with('ingredients')->whereIn('id', $productIds)->get()->keyBy('id');
+
         $unavailableProducts = [];
         foreach ($cart as $id => $item) {
-            $product = Product::with('ingredients')->find($id);
+            $product = $products->get($id);
             if ($product) {
                 // Проверяем, можем ли мы приготовить нужное количество товара
                 for ($i = 0; $i < $item['quantity']; $i++) {
@@ -79,10 +87,16 @@ class CheckoutController extends Controller
         try {
             $activeShift = Shift::where('status', 'active')->first();
             
+            if (!$activeShift) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'В данный момент нет активной смены. Пожалуйста, попробуйте позже.');
+            }
+            
             // Создаем новый заказ
             $order = new Order();
             $order->user_id = Auth::id();
-            $order->shift_id = $activeShift ? $activeShift->id : null; // привязываем к активной смене
+            $order->shift_id = $activeShift->id;
             $order->total_amount = $this->calculateTotal($cart);
             $order->status = 'В обработке';
             $order->payment_method = $request->payment_method;
@@ -118,7 +132,7 @@ class CheckoutController extends Controller
                 $orderItem->save();
 
                 // Списываем ингредиенты для каждого товара
-                $product = Product::find($id);
+                $product = $products->get($id);
                 if ($product) {
                     for ($i = 0; $i < $item['quantity']; $i++) {
                         $product->reduceIngredients();

@@ -128,22 +128,12 @@ class AdminController extends Controller
             'ingredients.min' => 'Необходимо добавить хотя бы один ингредиент',
         ]);
 
-        foreach ($request->ingredients as $ingredientData) {
-            $ingredient = Ingredient::find($ingredientData['id']);
-            if ($ingredient->quantity < $ingredientData['quantity']) {
-                return back()->withErrors([
-                    'ingredients' => "Недостаточно ингредиента '{$ingredient->name}'. Доступно: {$ingredient->quantity} {$ingredient->unit}, требуется: {$ingredientData['quantity']} {$ingredient->unit}"
-                ])->withInput();
-            }
-        }
-
         $data = $request->except('img_product');
 
         if ($request->hasFile('img_product')) {
             $imagePath = $this->processAndStoreImage($request->file('img_product'));
             $data['img_product'] = $imagePath;
             
-            // Delete old image if exists
             if ($product->img_product && Storage::disk('public')->exists($product->img_product)) {
                 Storage::disk('public')->delete($product->img_product);
             }
@@ -173,12 +163,9 @@ class AdminController extends Controller
 
     private function processAndStoreImage($uploadedFile)
     {
-        // Create unique filename
         $filename = time() . '_' . uniqid() . '.' . $uploadedFile->getClientOriginalExtension();
         $path = 'products/' . $filename;
         
-        // Store the original image directly
-        // Laravel will handle the file storage
         Storage::disk('public')->put($path, file_get_contents($uploadedFile->getPathname()));
         
         return $path;

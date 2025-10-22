@@ -10,7 +10,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AdminOrderController;
 use App\Http\Controllers\MainController;
-use App\Http\Controllers\DaDataController;
+use App\Http\Controllers\Api\AddressController;
 
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\IngredientController;
@@ -56,6 +56,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/help', [MainController::class, 'index'])->name('help');
+
+Route::get('/api/address-suggestions', [AddressController::class, 'getSuggestions']);
 
 Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':manager,admin'])->prefix('manager')->name('manager.')->group(function () {
     Route::get('/dashboard', [ManagerController::class, 'dashboard'])->name('dashboard');
@@ -132,18 +134,4 @@ Route::middleware(['auth', App\Http\Middleware\CheckRole::class.':admin'])->pref
     Route::get('/images/{filename}', function ($filename) {
         return response()->file(public_path('images/' . $filename));
     });
-});
-
-Route::prefix('api')->group(function () {
-    // Простейший тест без контроллера
-    Route::get('/test', function () {
-        return response()->json(['status' => 'success', 'message' => 'API работает!']);
-    });
-    
-    // Тесты DaData через контроллер
-    Route::get('/simple-test', [DaDataController::class, 'simpleTest']);
-    Route::get('/dadata-test-config', [DaDataController::class, 'testConfig']);
-    Route::get('/dadata-test-api', [DaDataController::class, 'testApi']);
-    
-    Route::get('/address-suggestions', [DaDataController::class, 'getAddressSuggestions']);
 });

@@ -123,7 +123,9 @@ class ReportsController extends Controller
 
         // Общая статистика
         $totalIngredients = $ingredients->count();
-        $lowStockCount = $ingredients->where('quantity', '<=', DB::raw('min_quantity'))->count();
+        $lowStockCount = $ingredients->filter(function($ing) {
+            return $ing->quantity <= $ing->min_quantity;
+        })->count();
         $totalCost = $ingredients->sum(function($ing) {
             return $ing->getAttribute('cost_period') ?? 0;
         });
@@ -249,7 +251,9 @@ class ReportsController extends Controller
         }
 
         $totalIngredients = $ingredients->count();
-        $lowStockCount = $ingredients->where('quantity', '<=', DB::raw('min_quantity'))->count();
+        $lowStockCount = $ingredients->filter(function($ing) {
+            return $ing->quantity <= $ing->min_quantity;
+        })->count();
         $totalCost = $ingredients->sum(function($ing) {
             return $ing->getAttribute('cost_period') ?? 0;
         });

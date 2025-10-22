@@ -46,6 +46,8 @@
     </div>
   </section>
 <div class="container">
+    <!-- Блок для отображения уведомлений -->
+    
     @if(isset($query))
         <h2>Результаты поиска для: {{ $query }}</h2>
     @endif
@@ -62,7 +64,7 @@
                 <div class="isotope-container row">
                     @foreach($products[$category->id] as $product)
                         <div class="item cat col-md-4 col-lg-3 my-4">
-                            <div class="card position-relative" style="height: 520px;">
+                            <div class="card position-relative" style="height: 560px;">
                                 <a href="{{ route('product.show', $product->id) }}">
                                     <div class="product-image-container" style="height: 280px; overflow: hidden; border-radius: 1rem;">
                                         <img src="{{ asset('storage/' . $product->img_product) }}" 
@@ -71,19 +73,26 @@
                                              alt="{{ $product->name_product }}">
                                     </div>
                                 </a>
-                                <div class="card-body p-0 d-flex flex-column" style="height: 240px;">
+                                <div class="card-body p-0 d-flex flex-column" style="height: 280px;">
                                     <a href="{{ route('product.show', $product->id) }}">
-                                        <h3 class="card-title pt-4 m-0" style="height: 60px; overflow: hidden;">{{ $product->name_product }}</h3>
+                                        <!-- Increased height to 95px for proper 2-line display with larger font -->
+                                        <h3 class="card-title pt-4 m-0" style="height: 95px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.5; word-break: normal; overflow-wrap: break-word; font-size: 1.5rem;">{{ $product->name_product }}</h3>
                                     </a>
                                     <div class="card-text flex-grow-1 d-flex flex-column justify-content-between">
-                                        <span class="rating secondary-font mb-3" style="height: 57px; overflow: hidden; font-size: 0.85rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.5; text-overflow: ellipsis; word-wrap: break-word; color: #6c757d;">
+                                        <!-- Removed mt-2 margin to reduce spacing between title and description -->
+                                        <span class="rating secondary-font mb-3" style="height: 80px; overflow: hidden; font-size: 0.9rem; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; line-height: 1.4; text-overflow: ellipsis; word-wrap: break-word; color: #6c757d;">
                                             {{ $product->description_product }}
                                         </span>
                                         <div class="mt-auto">
                                             <h3 class="secondary-font text-primary mb-2">{{ $product->price_product }} руб</h3>
-                                            <form action="{{ route('cart.add', $product->id) }}" method="POST">
+                                            <!-- Заменил кнопку на форму для надежного добавления в корзину -->
+                                            <form action="{{ route('cart.add', $product->id) }}" method="POST" class="d-inline w-100">
                                                 @csrf
-                                                <button type="submit" class="btn btn-primary btn-sm w-100" style="border-radius: 0.5rem; padding: 0.6rem;">Добавить в корзину</button>
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="btn btn-primary btn-sm w-100" 
+                                                        style="border-radius: 0.5rem; padding: 0.6rem;">
+                                                    Добавить в корзину
+                                                </button>
                                             </form>
                                         </div>
                                     </div>
@@ -98,7 +107,7 @@
 @endforeach
 @endif
 
-<!-- Добавляем секцию с картой между каталогом товаров и отзывами -->
+<!-- Секция с картой -->
 <section id="location" class="my-5" style="background: #F9F3EC;">
     <div class="container my-5 py-5">
         <div class="section-header text-center mb-5">
@@ -196,17 +205,5 @@
         </div>
       </div>
     </div>
-    <script>
-        window.onbeforeunload = function() {
-            localStorage.setItem('scrollPosition', window.scrollY);
-        };
-        window.onload = function() {
-            const scrollPosition = localStorage.getItem('scrollPosition');
-            if (scrollPosition) {
-                window.scrollTo(0, parseInt(scrollPosition));
-                localStorage.removeItem('scrollPosition');
-            }
-        };
-    </script>
   </section>
 @endsection

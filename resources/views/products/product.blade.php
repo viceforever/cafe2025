@@ -4,6 +4,7 @@
 @section('main_content')
 <div class="container min-vh-100 d-flex flex-column">
   <section id="selling-product" class="flex-grow-1" style="margin-top: 220px; margin-bottom: 50px">
+    
     <div class="row g-md-5">
       <div class="col-lg-6">
         <div class="row">
@@ -47,7 +48,7 @@
           <div class="cart-wrap">
             <div class="product-quantity pt-2">
               <div class="stock-button-wrap">
-                <form action="{{ route('cart.add', $product->id) }}" method="POST" id="addToCartForm">
+                <form id="addToCartForm">
                   @csrf
                   <div class="input-group product-qty align-items-center w-25 mb-3">
                     <span class="input-group-btn">
@@ -66,7 +67,7 @@
                       </button>
                     </span>
                   </div>
-                  <button type="submit" class="btn btn-primary">Добавить в корзину</button>
+                  <button type="submit" class="btn btn-primary" id="add-to-cart-btn">Добавить в корзину</button>
                 </form>
               </div>
             </div>
@@ -74,11 +75,129 @@
         </div>
       </div>
     </div>
-    @if (session('success'))
-      <div class="alert alert-success mt-3">
-        {{ session('success') }}
-      </div>
-    @endif
   </section>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInput = document.getElementById('quantity');
+    const minusBtn = document.querySelector('.quantity-left-minus');
+    const plusBtn = document.querySelector('.quantity-right-plus');
+    const form = document.getElementById('addToCartForm');
+    const addToCartBtn = document.getElementById('add-to-cart-btn');
+    
+    minusBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        let currentValue = parseInt(quantityInput.value);
+        if (currentValue > 1) {
+            quantityInput.value = currentValue - 1;
+        }
+        return false;
+    }, true);
+    
+    plusBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        let currentValue = parseInt(quantityInput.value);
+        quantityInput.value = currentValue + 1;
+        return false;
+    }, true);
+    
+    function showToast(message, type = 'success') {
+        const existingToast = document.querySelector('.custom-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        toastContainer.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 9999;';
+        
+        const toast = document.createElement('div');
+        toast.className = 'toast custom-toast show';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        toast.innerHTML = `
+            <div class="toast-header">
+                <div class="toast-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    </svg>
+                </div>
+                <strong class="me-auto">Успешно</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+        
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+        
+        toast.addEventListener('hidden.bs.toast', function() {
+            toastContainer.remove();
+        });
+    }
+    
+    // AJAX отправка формы
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const productId = {{ $product->id }};
+        const quantity = parseInt(quantityInput.value);
+        const originalText = addToCartBtn.textContent;
+        
+        addToCartBtn.disabled = true;
+        addToCartBtn.textContent = 'Добавление...';
+        
+        fetch(`/cart/add/${productId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ quantity: quantity })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                showToast('Товар добавлен в корзину');
+                
+                // Обновляем счетчик корзины в шапке
+                const cartCountElement = document.querySelector('.cart-count');
+                if (cartCountElement && data.cart_count) {
+                    cartCountElement.textContent = data.cart_count;
+                    cartCountElement.style.display = 'flex';
+                }
+                
+                // Сбрасываем количество на 1
+                quantityInput.value = 1;
+            }
+            addToCartBtn.textContent = originalText;
+            addToCartBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при добавлении товара в корзину');
+            addToCartBtn.textContent = originalText;
+            addToCartBtn.disabled = false;
+        });
+    });
+});
+</script>
 @endsection

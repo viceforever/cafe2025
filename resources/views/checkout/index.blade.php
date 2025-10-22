@@ -306,9 +306,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 validStreets.clear();
                 
                 if (data.error) {
+                    console.error('API Error:', data.error);
                     const errorItem = document.createElement('div');
-                    errorItem.className = 'p-2 text-success';
-                    errorItem.textContent = 'Ошибка загрузки подсказок';
+                    errorItem.className = 'p-2 text-danger small';
+                    errorItem.textContent = data.error;
                     streetSuggestions.appendChild(errorItem);
                     streetSuggestions.style.display = 'block';
                     validateAddress();
