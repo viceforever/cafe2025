@@ -86,7 +86,7 @@
                 
                 <div class="col-md-6">
                     <h2>Мои заказы</h2>
-                    @if($orders->count() > 0)
+                    @if($orders->total() > 0)
                         <ul class="list-group">
                             @foreach($orders as $order)
                                 <li class="list-group-item">
@@ -103,6 +103,42 @@
                                 </li>
                             @endforeach
                         </ul>
+                        
+                        {{-- Добавлена кастомная пагинация на русском языке --}}
+                        <div class="mt-3">
+                            @if ($orders->hasPages())
+                                <nav>
+                                    <ul class="pagination">
+                                        {{-- Previous Page Link --}}
+                                        @if ($orders->onFirstPage())
+                                            <li class="page-item disabled" aria-disabled="true">
+                                                <span class="page-link">« Предыдущая</span>
+                                            </li>
+                                        @else
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ $orders->previousPageUrl() }}" rel="prev">« Предыдущая</a>
+                                            </li>
+                                        @endif
+
+                                        {{-- Next Page Link --}}
+                                        @if ($orders->hasMorePages())
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ $orders->nextPageUrl() }}" rel="next">Следующая »</a>
+                                            </li>
+                                        @else
+                                            <li class="page-item disabled" aria-disabled="true">
+                                                <span class="page-link">Следующая »</span>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </nav>
+                                
+                                {{-- Добавлен текст "Показано X из Y заказов" на русском --}}
+                                <p class="text-muted small">
+                                    Показано {{ $orders->firstItem() }} - {{ $orders->lastItem() }} из {{ $orders->total() }} заказов
+                                </p>
+                            @endif
+                        </div>
                     @else
                         <p>У вас пока нет заказов.</p>
                     @endif

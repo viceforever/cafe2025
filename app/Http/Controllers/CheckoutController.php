@@ -22,8 +22,11 @@ class CheckoutController extends Controller
         }
         
         $total = $this->calculateTotal($cartItems);
+        
+        $activeShift = Shift::where('status', 'active')->first();
+        $hasActiveShift = !is_null($activeShift);
 
-        return view('checkout.index', compact('cartItems', 'total'));
+        return view('checkout.index', compact('cartItems', 'total', 'hasActiveShift'));
     }
 
     public function process(Request $request)

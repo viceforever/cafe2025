@@ -9,8 +9,23 @@
             <div class="col-md-8">
                 <h2 class="mb-4">Оформление заказа</h2>
                 
-                @if(session('error'))
-                    <div class="alert alert-danger">{{ session('error') }}</div>
+                @if(!$hasActiveShift)
+                    <div class="alert mb-4" style="background-color: #f8d7da; border-color: #f5c2c7; color: #842029;">
+                        <strong>Внимание!</strong> В данный момент оформление заказов временно недоступно. Пожалуйста, попробуйте позже.
+                    </div>
+                @endif
+                
+                @if(session('error') || $errors->any())
+                    <div class="alert alert-danger mb-4" id="error-message" style="background-color: #f8d7da; border-color: #f5c2c7; color: #842029;">
+                        <ul class="mb-0">
+                            @if(session('error'))
+                                <li>{{ session('error') }}</li>
+                            @endif
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                 @endif
 
                 <form action="{{ route('checkout.process') }}" method="POST" id="checkout-form">
@@ -156,7 +171,16 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100" id="submit-btn">Оформить заказ</button>
+                    {{-- Кнопка блокируется если нет активной смены --}}
+                    <button type="submit" class="btn btn-lg w-100" id="submit-btn" 
+                            @if(!$hasActiveShift) disabled @endif
+                            @if(!$hasActiveShift) style="background-color: #6c757d; border-color: #6c757d; color: white; cursor: not-allowed;" @else class="btn-primary" @endif>
+                        @if(!$hasActiveShift)
+                            Оформление недоступно
+                        @else
+                            Оформить заказ
+                        @endif
+                    </button>
                 </form>
             </div>
 
@@ -195,6 +219,15 @@
 {{-- Обновленный JavaScript для структурированной валидации адреса --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const errorMessage = document.getElementById('error-message');
+    if (errorMessage) {
+        errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Добавляем небольшую задержку для плавной прокрутки
+        setTimeout(() => {
+            window.scrollBy(0, -100); // Прокручиваем немного выше для лучшей видимости
+        }, 300);
+    }
+    
     const deliveryRadio = document.getElementById('delivery');
     const pickupRadio = document.getElementById('pickup');
     const addressCard = document.getElementById('delivery-address-card');
@@ -212,6 +245,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let streetValid = false;
     let validStreets = new Set();
     let lastSearchQuery = '';
+    
+    const hasActiveShift = {{ $hasActiveShift ? 'true' : 'false' }};
 
     function toggleAddressCard() {
         if (deliveryRadio && deliveryRadio.checked) {
@@ -266,6 +301,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateSubmitButton() {
+        if (!hasActiveShift) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Оформление недоступно';
+            submitBtn.style.backgroundColor = '#6c757d';
+            submitBtn.style.borderColor = '#6c757d';
+            submitBtn.style.color = 'white';
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.classList.remove('btn-primary');
+            return;
+        }
+        
         if (deliveryRadio.checked && !addressValid) {
             submitBtn.disabled = true;
             if (!streetValid && streetInput.value.trim().length >= 3) {
@@ -416,6 +462,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     form.addEventListener('submit', function(e) {
+        if (!hasActiveShift) {
+            e.preventDefault();
+            alert('В данный момент нет активной смены. Оформление заказов недоступно.');
+            return false;
+        }
+        
         const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
         const deliveryMethod = document.querySelector('input[name="delivery_method"]:checked');
         const phone = document.getElementById('phone');

@@ -11,7 +11,10 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user();
-        $orders = $user->orders()->orderBy('created_at', 'desc')->get();
+        $orders = $user->orders()
+            ->with(['orderItems.product'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(3);
         return view('profile.show', compact('user', 'orders'));
     }
 
@@ -50,7 +53,7 @@ class ProfileController extends Controller
             'current_password' => 'required',
             'new_password' => 'required|string|min:8|confirmed',
         ], [
-            'current_password.required' => 'Введите ��екущий пароль.',
+            'current_password.required' => 'Введите текущий пароль.',
             'new_password.required' => 'Введите новый пароль.',
             'new_password.min' => 'Новый пароль должен содержать минимум 8 символов.',
             'new_password.confirmed' => 'Подтверждение пароля не совпадает.',
