@@ -17,87 +17,31 @@
                         </tr>
                     </thead>
                     <tbody id="cart-items">
-                        @if (session('cart') && count(session('cart')) > 0)
-                            @foreach (session('cart') as $id => $item)
-                                <tr data-item-id="{{ $id }}">
-                                    <td scope="row" class="py-4">
-                                        <div class="cart-info d-flex flex-wrap align-items-center">
-                                            <div class="col-lg-3">
-                                                <div class="card-image">
-                                                    <img src="{{ $item['img_product'] ? Storage::url($item['img_product']) : asset('default-image.jpg') }}" alt="{{ $item['name'] }}" class="img-fluid">
-                                                </div>
-                                            </div>
-                                            <div class="col-lg-9">
-                                                <div class="cart-detail ps-3">
-                                                    <h5 class="card-title">
-                                                        <a href="{{ route('product.show', $item['id']) }}" class="text-decoration-none">{{ $item['name'] }}</a>
-                                                    </h5>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-4 align-middle">
-                                        <div class="d-flex align-items-center justify-content-center gap-2">
-                                            <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center cart-decrease" 
-                                                    data-item-id="{{ $id }}" style="width: 32px; height: 32px; padding: 0;">
-                                                <svg width="16" height="16">
-                                                    <use xlink:href="#minus"></use>
-                                                </svg>
-                                            </button>
-
-                                            <input type="text" class="form-control text-center item-quantity" style="width: 60px; padding: 6px;" value="{{ $item['quantity'] }}" readonly>
-                                            
-                                            <button type="button" class="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center cart-increase" 
-                                                    data-item-id="{{ $id }}" style="width: 32px; height: 32px; padding: 0;">
-                                                <svg width="16" height="16">
-                                                    <use xlink:href="#plus"></use>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                    <td class="py-4 align-middle">
-                                        <div class="total-price">
-                                            <!-- Added white-space: nowrap to prevent ruble symbol wrapping -->
-                                            <span class="secondary-font fw-medium item-total" style="white-space: nowrap;">{{ $item['price'] * $item['quantity'] }} ₽</span>
-                                        </div>
-                                    </td>
-                                    <td class="py-4 align-middle">
-                                        <div class="cart-remove">
-                                            <button type="button" class="btn btn-link p-0 cart-remove-btn" data-item-id="{{ $id }}">
-                                                <svg width="24" height="24">
-                                                    <use xlink:href="#trash"></use>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        @else
-                            <tr id="empty-cart-message">
-                                <td colspan="4" class="py-4 text-center">Корзина пуста.</td>
-                            </tr>
-                        @endif
+                        @include('cart.partials.items', ['paginatedCart' => $paginatedCart])
                     </tbody>
                 </table>
+                
+                <div id="pagination-container">
+                    @include('cart.partials.pagination', ['paginatedCart' => $paginatedCart])
+                </div>
             </div>
             <div class="col-md-4">
                 <div class="cart-totals">
                     <h2 class="pb-4">Итоговая стоимость:</h2>
                     <div class="total-price pb-4">
-                        <!-- Simplified structure with flexbox to prevent wrapping -->
                         <div style="border-top: 1px solid #dee2e6; border-bottom: 1px solid #dee2e6; padding: 1rem 0; display: flex; align-items: center; justify-content: flex-start;">
                             <div style="font-size: 1.25rem; white-space: nowrap; display: inline-block;">
-                                <span id="cart-total">{{ array_reduce(session('cart', []), function ($carry, $item) {
+                                <span id="cart-total">{{ array_reduce($cart, function ($carry, $item) {
                                     return $carry + ($item['price'] * $item['quantity']);
                                 }, 0) }}</span> ₽
                             </div>
                         </div>
                     </div>
                     <div>
-                        @if (session('cart') && count(session('cart')) > 0)
-                            <a href="{{ route('checkout') }}" class="btn btn-primary">Оформить заказ</a>
+                        @if (count($cart) > 0)
+                            <a href="{{ route('checkout') }}" class="btn btn-primary" id="checkout-btn">Оформить заказ</a>
                         @else
-                            <button class="btn btn-secondary" disabled>Корзина пуста</button>
+                            <button class="btn btn-secondary" disabled id="checkout-btn">Корзина пуста</button>
                         @endif
                     </div>
                 </div>
@@ -111,6 +55,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const cartItemsContainer = document.getElementById('cart-items');
     const cartTotalElement = document.getElementById('cart-total');
     const cartCountElement = document.querySelector('.cart-count');
+    const paginationContainer = document.getElementById('pagination-container');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    
+    function getCurrentPage() {
+        const urlParams = new URLSearchParams(window.location.search);
+        return parseInt(urlParams.get('page')) || 1;
+    }
     
     function updateCartCount(count) {
         if (cartCountElement) {
@@ -120,6 +71,22 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 cartCountElement.style.display = 'none';
             }
+        }
+    }
+    
+    function updateCheckoutButton(cartCount) {
+        if (cartCount > 0) {
+            checkoutBtn.classList.remove('btn-secondary');
+            checkoutBtn.classList.add('btn-primary');
+            checkoutBtn.disabled = false;
+            checkoutBtn.textContent = 'Оформить заказ';
+            checkoutBtn.href = '{{ route("checkout") }}';
+        } else {
+            checkoutBtn.classList.remove('btn-primary');
+            checkoutBtn.classList.add('btn-secondary');
+            checkoutBtn.disabled = true;
+            checkoutBtn.textContent = 'Корзина пуста';
+            checkoutBtn.removeAttribute('href');
         }
     }
     
@@ -190,7 +157,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function updateCartItem(itemId, action) {
-        fetch(`/cart/update/${itemId}`, {
+        const currentPage = getCurrentPage();
+        
+        fetch(`/cart/update/${itemId}?page=${currentPage}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -202,26 +171,22 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                if (data.item_removed) {
-                    const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
-                    if (row) {
-                        row.style.transition = 'opacity 0.3s';
-                        row.style.opacity = '0';
-                        setTimeout(() => {
-                            row.remove();
-                            checkEmptyCart();
-                        }, 300);
-                    }
-                } else {
-                    const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
-                    if (row) {
-                        row.querySelector('.item-quantity').value = data.item_quantity;
-                        row.querySelector('.item-total').textContent = `${data.item_total} ₽`;
-                    }
+                if (data.items_html) {
+                    cartItemsContainer.innerHTML = data.items_html;
+                }
+                
+                if (paginationContainer && data.pagination_html) {
+                    paginationContainer.innerHTML = data.pagination_html;
+                }
+                
+                if (data.needs_redirect) {
+                    window.location.href = `{{ route('cart.index') }}?page=${data.redirect_page}`;
+                    return;
                 }
                 
                 cartTotalElement.textContent = data.cart_total;
                 updateCartCount(data.cart_count);
+                updateCheckoutButton(data.cart_count);
             }
         })
         .catch(error => {
@@ -231,7 +196,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function removeCartItem(itemId) {
-        fetch(`/cart/remove/${itemId}`, {
+        const currentPage = getCurrentPage();
+        
+        fetch(`/cart/remove/${itemId}?page=${currentPage}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -242,18 +209,22 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
-                if (row) {
-                    row.style.transition = 'opacity 0.3s';
-                    row.style.opacity = '0';
-                    setTimeout(() => {
-                        row.remove();
-                        checkEmptyCart();
-                    }, 300);
+                if (data.items_html) {
+                    cartItemsContainer.innerHTML = data.items_html;
+                }
+                
+                if (paginationContainer && data.pagination_html) {
+                    paginationContainer.innerHTML = data.pagination_html;
+                }
+                
+                if (data.needs_redirect) {
+                    window.location.href = `{{ route('cart.index') }}?page=${data.redirect_page}`;
+                    return;
                 }
                 
                 cartTotalElement.textContent = data.cart_total;
                 updateCartCount(data.cart_count);
+                updateCheckoutButton(data.cart_count);
                 
                 showToast('Товар удален из корзины');
             }
@@ -262,13 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Ошибка:', error);
             showToast('Произошла ошибка при удалении товара', 'danger');
         });
-    }
-    
-    function checkEmptyCart() {
-        const rows = cartItemsContainer.querySelectorAll('tr[data-item-id]');
-        if (rows.length === 0) {
-            cartItemsContainer.innerHTML = '<tr id="empty-cart-message"><td colspan="4" class="py-4 text-center">Корзина пуста.</td></tr>';
-        }
     }
 });
 </script>

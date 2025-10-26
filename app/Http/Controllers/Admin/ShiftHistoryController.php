@@ -30,7 +30,7 @@ class ShiftHistoryController extends Controller
             $query->where('status', $request->status);
         }
 
-        $shifts = $query->orderBy('start_time', 'desc')->paginate(15);
+        $shifts = $query->orderBy('start_time', 'desc')->paginate(4);
 
         $employees = User::whereIn('role', ['manager', 'admin'])
             ->orderBy('last_name')

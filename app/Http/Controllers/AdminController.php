@@ -18,7 +18,7 @@ class AdminController extends Controller
             abort(403,'У вас нет прав доступа к этой странице.');
         }
         $categories = CategoryProduct::all();
-        $products = Product::with('category')->get();
+        $products = Product::with('category')->paginate(10);
         return view('admin.products.index', compact('products', 'categories'));
     }
 

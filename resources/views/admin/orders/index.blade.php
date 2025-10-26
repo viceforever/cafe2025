@@ -6,7 +6,6 @@
         <div class="col-12">
             <h1>Управление заказами</h1>
 
-            {{-- Удалены зеленые alert-блоки, оставлены только всплывающие уведомления --}}
             @if(session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>Ошибка!</strong> {{ session('error') }}
@@ -42,7 +41,6 @@
                 </div>
             </div>
 
-            {{-- Added minimal styles only for fixing dropdown overflow in table --}}
             <style>
                 .table-responsive {
                     overflow: visible !important;
@@ -64,7 +62,7 @@
                             <th>Клиент</th>
                             <th>Сумма</th>
                             <th>Статус</th>
-                            <th>Способ оплаты</th>
+                            <th>Спос��б оплаты</th>
                             <th>Способ получения</th>
                             <th>Комментарий</th>
                             <th>Дата создания</th>
@@ -132,7 +130,6 @@
                                     @endif
                                 </td>
                                 <td>
-                                    {{-- Changed to dropup to prevent scrolling --}}
                                     <div class="dropdown dropup">
                                         <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
                                                 type="button" data-bs-toggle="dropdown" data-bs-auto-close="true">

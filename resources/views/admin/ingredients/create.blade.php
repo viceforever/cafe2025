@@ -9,6 +9,16 @@
                     <h4>Добавить ингредиент</h4>
                 </div>
                 <div class="card-body">
+                    @if ($errors->any())
+                        <div style="background-color: #f8d7da; border: 1px solid #f5c2c7; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                            <ul style="margin: 0; padding-left: 20px; color: #842029;">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <form action="{{ route('admin.ingredients.store') }}" method="POST">
                         @csrf
                         

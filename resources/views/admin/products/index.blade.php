@@ -38,6 +38,29 @@
                     </tbody>
                 </table>
             </div>
+
+            {{-- добавил пагинацию --}}
+            @if($products->hasPages())
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button class="btn btn-outline-secondary {{ $products->onFirstPage() ? 'disabled' : '' }}" 
+                                    {{ $products->onFirstPage() ? 'disabled' : '' }}
+                                    onclick="window.location='{{ $products->previousPageUrl() }}'">
+                                Предыдущая
+                            </button>
+                            <button class="btn btn-outline-secondary {{ !$products->hasMorePages() ? 'disabled' : '' }}" 
+                                    {{ !$products->hasMorePages() ? 'disabled' : '' }}
+                                    onclick="window.location='{{ $products->nextPageUrl() }}'">
+                                Следующая
+                            </button>
+                        </div>
+                        <div class="text-muted">
+                            Показано {{ $products->firstItem() }} - {{ $products->lastItem() }} из {{ $products->total() }} товаров
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 </div>

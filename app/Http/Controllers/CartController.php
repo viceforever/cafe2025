@@ -4,13 +4,37 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class CartController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $cart = session()->get('cart', []);
-        return view('cart.index', compact('cart'));
+        
+        $perPage = 3;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $cartItems = collect($cart);
+        
+        $totalPages = ceil($cartItems->count() / $perPage);
+        if ($currentPage > $totalPages && $totalPages > 0) {
+            $currentPage = $totalPages;
+        }
+        
+        $currentPageItems = $cartItems->slice(($currentPage - 1) * $perPage, $perPage)->all();
+        
+        $paginatedCart = new LengthAwarePaginator(
+            $currentPageItems,
+            $cartItems->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+        
+        return view('cart.index', [
+            'cart' => $cart,
+            'paginatedCart' => $paginatedCart
+        ]);
     }
 
     public function add(Request $request, $id)
@@ -68,12 +92,49 @@ class CartController extends Controller
                 return $carry + ($item['price'] * $item['quantity']);
             }, 0);
             
+            $perPage = 3;
+            $currentPage = $request->input('page', 1);
+            $totalItems = count($cart);
+            $totalPages = ceil($totalItems / $perPage);
+            
+            if ($currentPage > $totalPages && $totalPages > 0) {
+                $currentPage = $totalPages;
+            }
+            
+            $cartItems = collect($cart);
+            $currentPageItems = $cartItems->slice(($currentPage - 1) * $perPage, $perPage)->all();
+            
+            $paginatedCart = new LengthAwarePaginator(
+                $currentPageItems,
+                $cartItems->count(),
+                $perPage,
+                $currentPage,
+                ['path' => route('cart.index'), 'query' => $request->query()]
+            );
+            
+            $itemsHtml = view('cart.partials.items', [
+                'paginatedCart' => $paginatedCart
+            ])->render();
+            
+            $paginationHtml = view('cart.partials.pagination', [
+                'paginatedCart' => $paginatedCart
+            ])->render();
+            
+            $needsRedirect = $currentPage != $request->input('page', 1);
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Товар удален из корзины',
                 'cart_count' => $cartCount,
                 'cart_total' => $cartTotal,
-                'cart' => $cart
+                'cart' => $cart,
+                'total_items' => $totalItems,
+                'current_page' => $currentPage,
+                'total_pages' => $totalPages,
+                'needs_redirect' => $needsRedirect,
+                'redirect_page' => $currentPage,
+                'items_html' => $itemsHtml, // Add items HTML to response
+                'pagination_html' => $paginationHtml
             ]);
         }
         
@@ -106,6 +167,36 @@ class CartController extends Controller
             $itemTotal = isset($cart[$id]) ? $cart[$id]['price'] * $cart[$id]['quantity'] : 0;
             $itemQuantity = isset($cart[$id]) ? $cart[$id]['quantity'] : 0;
             
+            $perPage = 3;
+            $currentPage = $request->input('page', 1);
+            $totalItems = count($cart);
+            $totalPages = ceil($totalItems / $perPage);
+            
+            if ($currentPage > $totalPages && $totalPages > 0) {
+                $currentPage = $totalPages;
+            }
+            
+            $cartItems = collect($cart);
+            $currentPageItems = $cartItems->slice(($currentPage - 1) * $perPage, $perPage)->all();
+            
+            $paginatedCart = new LengthAwarePaginator(
+                $currentPageItems,
+                $cartItems->count(),
+                $perPage,
+                $currentPage,
+                ['path' => route('cart.index'), 'query' => $request->query()]
+            );
+            
+            $itemsHtml = view('cart.partials.items', [
+                'paginatedCart' => $paginatedCart
+            ])->render();
+            
+            $paginationHtml = view('cart.partials.pagination', [
+                'paginatedCart' => $paginatedCart
+            ])->render();
+            
+            $needsRedirect = $currentPage != $request->input('page', 1);
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Корзина обновлена',
@@ -114,7 +205,14 @@ class CartController extends Controller
                 'item_total' => $itemTotal,
                 'item_quantity' => $itemQuantity,
                 'item_removed' => !isset($cart[$id]),
-                'cart' => $cart
+                'cart' => $cart,
+                'total_items' => $totalItems,
+                'current_page' => $currentPage,
+                'total_pages' => $totalPages,
+                'needs_redirect' => $needsRedirect,
+                'redirect_page' => $currentPage,
+                'items_html' => $itemsHtml, // Add items HTML to response
+                'pagination_html' => $paginationHtml
             ]);
         }
         

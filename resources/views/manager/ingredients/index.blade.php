@@ -58,6 +58,28 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    @if($ingredients->hasPages())
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button class="btn btn-outline-secondary {{ $ingredients->onFirstPage() ? 'disabled' : '' }}" 
+                                            {{ $ingredients->onFirstPage() ? 'disabled' : '' }}
+                                            onclick="window.location='{{ $ingredients->previousPageUrl() }}'">
+                                        Предыдущая
+                                    </button>
+                                    <button class="btn btn-outline-secondary {{ !$ingredients->hasMorePages() ? 'disabled' : '' }}" 
+                                            {{ !$ingredients->hasMorePages() ? 'disabled' : '' }}
+                                            onclick="window.location='{{ $ingredients->nextPageUrl() }}'">
+                                        Следующая
+                                    </button>
+                                </div>
+                                <div class="text-muted">
+                                    Показано {{ $ingredients->firstItem() }} - {{ $ingredients->lastItem() }} из {{ $ingredients->total() }} ингредиентов
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

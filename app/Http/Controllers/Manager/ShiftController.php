@@ -20,7 +20,7 @@ class ShiftController extends Controller
                           $query->where('status', '<>', 'Отменен');
                       }], 'total_amount')
                       ->orderBy('start_time', 'desc')
-                      ->paginate(15);
+                      ->paginate(3);
 
         foreach ($shifts as $shift) {
             $shift->total_orders = $shift->orders_count ?? 0;

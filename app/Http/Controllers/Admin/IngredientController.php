@@ -10,7 +10,7 @@ class IngredientController extends Controller
 {
     public function index()
     {
-        $ingredients = Ingredient::paginate(15);
+        $ingredients = Ingredient::paginate(4);
         $lowStockIngredients = Ingredient::whereRaw('quantity <= min_quantity')->get();
         
         return view('admin.ingredients.index', compact('ingredients', 'lowStockIngredients'));
@@ -24,11 +24,13 @@ class IngredientController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:ingredients,name',
             'unit' => 'required|string|max:50',
             'quantity' => 'required|numeric|min:0',
             'cost_per_unit' => 'required|numeric|min:0',
             'min_quantity' => 'required|numeric|min:0',
+        ], [
+            'name.unique' => 'Ингредиент с таким названием уже существует',
         ]);
 
         Ingredient::create($request->all());
@@ -45,11 +47,13 @@ class IngredientController extends Controller
     public function update(Request $request, Ingredient $ingredient)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:ingredients,name,' . $ingredient->id,
             'unit' => 'required|string|max:50',
             'quantity' => 'required|numeric|min:0',
             'cost_per_unit' => 'required|numeric|min:0',
             'min_quantity' => 'required|numeric|min:0',
+        ], [
+            'name.unique' => 'Ингредиент с таким названием уже существует',
         ]);
 
         $ingredient->update($request->all());

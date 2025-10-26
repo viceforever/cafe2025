@@ -165,7 +165,8 @@ class ManagerController extends Controller
             $query->where('status', $request->status);
         }
 
-        $orders = $query->paginate(20)->appends($request->query());
+        // Изменил пагинацию с 20 на 4 заказа
+        $orders = $query->paginate(4)->appends($request->query());
         
         // Получаем все возможные статусы для фильтра
         $statuses = ['В обработке', 'Подтвержден', 'Готовится', 'Готов к выдаче', 'Выдан', 'Отменен'];
@@ -284,10 +285,9 @@ class ManagerController extends Controller
 
     public function ingredients()
     {
-        $ingredients = Ingredient::orderBy('name')->get();
-        $lowStockIngredients = $ingredients->filter(function ($ingredient) {
-            return $ingredient->isLowStock();
-        });
+        // Добавил пагинацию для ингредиентов
+        $ingredients = Ingredient::orderBy('name')->paginate(4);
+        $lowStockIngredients = Ingredient::whereRaw('quantity <= min_quantity')->get();
 
         return view('manager.ingredients.index', compact('ingredients', 'lowStockIngredients'));
     }

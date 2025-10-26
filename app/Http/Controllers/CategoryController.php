@@ -37,6 +37,8 @@ class CategoryController extends Controller
 
         $request->validate([
             'name_category' => 'required|string|max:255|unique:category_products',
+        ], [
+            'name_category.unique' => 'Категория с таким названием уже существует',
         ]);
 
         CategoryProduct::create($request->all());
