@@ -28,7 +28,7 @@ class ProductController extends Controller
         $request->validate([
             'name_product' => 'required|string|max:255',
             'description_product' => 'required|string',
-            'price_product' => 'required|numeric|min:0',
+            'price_product' => 'required|numeric|min:0|max:999999.99',
             'img_product' => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
             'id_category' => 'required|exists:categories,id',
             'ingredients' => 'required|array|min:1',
@@ -39,8 +39,9 @@ class ProductController extends Controller
             'name_product.max' => 'Название товара не должно превышать 255 символов',
             'description_product.required' => 'Описание товара обязательно для заполнения',
             'price_product.required' => 'Цена товара обязательна для заполнения',
-            'price_product.numeric' => 'Цена товара должна б��ть числом',
+            'price_product.numeric' => 'Цена товара должна быть числом',
             'price_product.min' => 'Цена товара не может быть отрицательной',
+            'price_product.max' => 'Цена товара не может превышать 999 999.99',
             'img_product.required' => 'Изображение товара обязательно для загрузки',
             'img_product.image' => 'Файл должен быть изображением',
             'img_product.mimes' => 'Изображение должно быть в формате: jpeg, png, jpg, gif',
@@ -101,7 +102,7 @@ class ProductController extends Controller
         $request->validate([
             'name_product' => 'required|string|max:255',
             'description_product' => 'required|string',
-            'price_product' => 'required|numeric|min:0',
+            'price_product' => 'required|numeric|min:0|max:999999.99',
             'img_product' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4096',
             'id_category' => 'required|exists:categories,id',
             'ingredients' => 'required|array|min:1',

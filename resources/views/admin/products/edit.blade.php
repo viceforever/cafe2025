@@ -34,7 +34,12 @@
                 </div>
                 <div class="mb-3">
                     <label for="price_product" class="form-label">Цена товара</label>
-                    <input type="number" class="form-control" id="price_product" name="price_product" step="0.01" value="{{ $product->price_product }}" required>
+                    <input type="number" class="form-control" id="price_product" name="price_product" step="0.01" min="0" max="999999.99" value="{{ $product->price_product }}" required>
+                    <small class="form-text text-muted">
+                        Максимальная цена: 999 999.99
+                    </small>
+                    <div id="price-error" class="mt-1" style="display: none; color: #dc3545; font-weight: bold;"></div>
+                    <div id="price-warning" class="mt-1" style="display: none; color: #ffc107; font-weight: bold;"></div>
                 </div>
                 <div class="mb-3">
                     <label for="img_product" class="form-label">Изображение товара</label>
@@ -126,6 +131,52 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('char-count').textContent = this.value.length;
     });
     
+    const priceInput = document.getElementById('price_product');
+    const priceError = document.getElementById('price-error');
+    const priceWarning = document.getElementById('price-warning');
+    const submitBtn = document.getElementById('submit-btn');
+    const MAX_PRICE = 999999.99;
+    const WARNING_THRESHOLD = 900000;
+    
+    priceInput.addEventListener('input', function() {
+        const price = parseFloat(this.value);
+        
+        if (isNaN(price)) {
+            priceError.style.display = 'none';
+            priceWarning.style.display = 'none';
+            return;
+        }
+        
+        if (price > MAX_PRICE) {
+            priceError.textContent = `❌ Цена превышает максимально допустимое значение (999 999.99)! Товар не может быть обновлен с такой ценой.`;
+            priceError.style.display = 'block';
+            priceWarning.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.title = 'Уменьшите цену товара';
+            this.classList.add('is-invalid');
+        } else if (price >= WARNING_THRESHOLD) {
+            priceError.style.display = 'none';
+            priceWarning.textContent = `⚠️ Внимание: цена приближается к максимальному значению (999 999.99)`;
+            priceWarning.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.title = '';
+            this.classList.remove('is-invalid');
+        } else if (price < 0) {
+            priceError.textContent = `❌ Цена не может быть отрицательной!`;
+            priceError.style.display = 'block';
+            priceWarning.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.title = 'Введите положительную цену';
+            this.classList.add('is-invalid');
+        } else {
+            priceError.style.display = 'none';
+            priceWarning.style.display = 'none';
+            submitBtn.disabled = false;
+            submitBtn.title = '';
+            this.classList.remove('is-invalid');
+        }
+    });
+    
     document.getElementById('img_product').addEventListener('change', function() {
         const fileInput = this;
         const file = fileInput.files[0];
@@ -170,6 +221,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
             alert(`❌ Невозможно отправить форму!\n\nРазмер файла (${fileSizeMB} МБ) превышает максимально допустимый размер (4 МБ).\n\nПожалуйста, выберите файл меньшего размера.`);
             fileInput.focus();
+            return false;
+        }
+        
+        const price = parseFloat(priceInput.value);
+        if (price > MAX_PRICE) {
+            e.preventDefault();
+            e.stopPropagation();
+            alert(`❌ Невозможно обновить товар!\n\nЦена (${price.toFixed(2)}) превышает максимально допустимое значение (999 999.99).\n\nПожалуйста, уменьшите цену товара.`);
+            priceInput.focus();
+            return false;
+        }
+        
+        if (price < 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            alert(`❌ Невозможно обновить товар!\n\nЦена не может быть отрицательной.`);
+            priceInput.focus();
             return false;
         }
     });
