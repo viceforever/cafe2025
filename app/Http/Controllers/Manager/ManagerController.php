@@ -186,6 +186,17 @@ class ManagerController extends Controller
         DB::beginTransaction();
         try {
             if ($oldStatus === 'Отменен' && $newStatus !== 'Отменен') {
+                foreach ($order->orderItems as $orderItem) {
+                    $product = $orderItem->product;
+                    if ($product) {
+                        for ($i = 0; $i < $orderItem->quantity; $i++) {
+                            $product->reduceIngredients();
+                        }
+                    }
+                }
+            }
+
+            if ($newStatus === 'Готовится' && $oldStatus !== 'Готовится') {
                 $missingIngredients = [];
                 
                 foreach ($order->orderItems as $orderItem) {
@@ -209,21 +220,12 @@ class ManagerController extends Controller
                 
                 if (!empty($missingIngredients)) {
                     DB::rollback();
-                    $errorMessage = 'Невозможно изменить статус заказа. Недостаточно ингредиентов: ' . implode(', ', $missingIngredients);
+                    $errorMessage = 'Невозможно начать готовку. Недостаточно ингредиентов: ' . implode(', ', $missingIngredients);
                     return redirect()->back()->with('error', $errorMessage);
-                }
-                
-                foreach ($order->orderItems as $orderItem) {
-                    $product = $orderItem->product;
-                    if ($product) {
-                        for ($i = 0; $i < $orderItem->quantity; $i++) {
-                            $product->reduceIngredients();
-                        }
-                    }
                 }
             }
             
-            if ($oldStatus !== 'Отменен' && $newStatus === 'Отменен') {
+            if ($newStatus === 'Отменен' && in_array($oldStatus, ['В обработке', 'Подтвержден'])) {
                 foreach ($order->orderItems as $orderItem) {
                     $product = $orderItem->product;
                     if ($product) {
@@ -238,8 +240,9 @@ class ManagerController extends Controller
             DB::commit();
 
             $message = match(true) {
-                $oldStatus === 'Отменен' && $newStatus !== 'Отменен' => 'Статус заказа изменен, ингредиенты списаны',
-                $oldStatus !== 'Отменен' && $newStatus === 'Отменен' => 'Статус заказа изменен, ингредиенты восстановлены',
+                $oldStatus === 'Отменен' && $newStatus !== 'Отменен' => 'Статус изменен, ингредиенты зарезервированы',
+                $newStatus === 'Отменен' && in_array($oldStatus, ['В обработке', 'Подтвержден']) => 'Статус изменен на "Отменен", ингредиенты восстановлены',
+                $newStatus === 'Отменен' => 'Статус изменен на "Отменен"',
                 default => 'Статус заказа обновлен'
             };
 
@@ -263,11 +266,13 @@ class ManagerController extends Controller
         DB::beginTransaction();
         try {
             if ($order->status !== 'Отменен') {
-                foreach ($order->orderItems as $orderItem) {
-                    $product = $orderItem->product;
-                    if ($product) {
-                        for ($i = 0; $i < $orderItem->quantity; $i++) {
-                            $product->restoreIngredients();
+                if (in_array($order->status, ['В обработке', 'Подтвержден'])) {
+                    foreach ($order->orderItems as $orderItem) {
+                        $product = $orderItem->product;
+                        if ($product) {
+                            for ($i = 0; $i < $orderItem->quantity; $i++) {
+                                $product->restoreIngredients();
+                            }
                         }
                     }
                 }
@@ -276,7 +281,11 @@ class ManagerController extends Controller
             $order->update(['status' => 'Отменен']);
             DB::commit();
             
-            return redirect()->back()->with('success', 'Заказ отменен, ингредиенты восстановлены');
+            $message = in_array($order->status, ['В обработке', 'Подтвержден'])
+                ? 'Заказ отменен, ингредиенты восстановлены'
+                : 'Заказ отменен';
+            
+            return redirect()->back()->with('success', $message);
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()->with('error', 'Ошибка при отмене заказа: ' . $e->getMessage());

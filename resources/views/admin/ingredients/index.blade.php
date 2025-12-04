@@ -65,7 +65,7 @@
                                                 <span class="badge bg-danger text-white">Низкий остаток</span>
                                             @else
                                                 <!-- изменил цвет с bg-primary на bg-success для лучшей видимости -->
-                                                <!-- Здесь можно поменять цвет статуса: bg-primary (синий), bg-success (зеленый), bg-info (голубой) -->
+                                                <!-- Здесь можно поменять цвет статуса: bg-primary (синий), bg-success (зелен��й), bg-info (голубой) -->
                                                 <span class="badge bg-success text-white">В наличии</span>
                                             @endif
                                         </td>

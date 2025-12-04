@@ -12,6 +12,19 @@ class CartController extends Controller
     {
         $cart = session()->get('cart', []);
         
+        $unavailableItems = [];
+        $productIds = array_keys($cart);
+        if (!empty($productIds)) {
+            $products = Product::with('ingredients')->whereIn('id', $productIds)->get()->keyBy('id');
+            
+            foreach ($cart as $id => $item) {
+                $product = $products->get($id);
+                if ($product && !$product->isAvailableInQuantity($item['quantity'])) {
+                    $unavailableItems[] = $item['name'];
+                }
+            }
+        }
+        
         $perPage = 3;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $cartItems = collect($cart);
@@ -33,7 +46,8 @@ class CartController extends Controller
         
         return view('cart.index', [
             'cart' => $cart,
-            'paginatedCart' => $paginatedCart
+            'paginatedCart' => $paginatedCart,
+            'unavailableItems' => $unavailableItems
         ]);
     }
 
@@ -43,6 +57,26 @@ class CartController extends Controller
         $quantity = intval($request->input('quantity', 1));
 
         $cart = session()->get('cart', []);
+        $newQuantity = $quantity;
+        if(isset($cart[$id])) {
+            $newQuantity += $cart[$id]['quantity'];
+        }
+
+        $maxAvailable = $product->getMaxAvailableQuantity();
+        
+        if (!$product->isAvailableInQuantity($newQuantity)) {
+            $errorMessage = $maxAvailable > 0 
+                ? "К сожалению, на данный момент можно заказать не более {$maxAvailable} шт. этого товара из-за нехватки ингредиентов."
+                : "К сожалению, выбранное количество данного блюда временно недоступно. Попробуйте выбрать позиций меньше.";
+                
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ]);
+            }
+            return redirect()->back()->with('error', $errorMessage);
+        }
         
         if(isset($cart[$id])) {
             $cart[$id]['quantity'] += $quantity;
@@ -112,6 +146,19 @@ class CartController extends Controller
                 ['path' => route('cart.index'), 'query' => $request->query()]
             );
             
+            $unavailableItems = [];
+            $productIds = array_keys($cart);
+            if (!empty($productIds)) {
+                $products = Product::with('ingredients')->whereIn('id', $productIds)->get()->keyBy('id');
+                
+                foreach ($cart as $productId => $item) {
+                    $product = $products->get($productId);
+                    if ($product && !$product->isAvailableInQuantity($item['quantity'])) {
+                        $unavailableItems[] = $item['name'];
+                    }
+                }
+            }
+            
             $itemsHtml = view('cart.partials.items', [
                 'paginatedCart' => $paginatedCart
             ])->render();
@@ -133,8 +180,9 @@ class CartController extends Controller
                 'total_pages' => $totalPages,
                 'needs_redirect' => $needsRedirect,
                 'redirect_page' => $currentPage,
-                'items_html' => $itemsHtml, // Add items HTML to response
-                'pagination_html' => $paginationHtml
+                'items_html' => $itemsHtml,
+                'pagination_html' => $paginationHtml,
+                'has_unavailable_items' => !empty($unavailableItems)
             ]);
         }
         
@@ -146,6 +194,21 @@ class CartController extends Controller
         $cart = session()->get('cart', []);
         if(isset($cart[$id])) {
             if($request->input('action') === 'increase') {
+                $product = Product::with('ingredients')->find($id);
+                if ($product && !$product->isAvailableInQuantity($cart[$id]['quantity'] + 1)) {
+                    $maxAvailable = $product->getMaxAvailableQuantity();
+                    $errorMessage = $maxAvailable > 0 
+                        ? "На данный момент можно заказать не более {$maxAvailable} шт. этого товара."
+                        : "К сожалению, выбранное количество данного блюда временно недоступно. Попробуйте выбрать позиций меньше.";
+                        
+                    if ($request->ajax() || $request->wantsJson()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $errorMessage
+                        ]);
+                    }
+                    return redirect()->back()->with('error', $errorMessage);
+                }
                 $cart[$id]['quantity']++;
             } elseif($request->input('action') === 'decrease') {
                 if($cart[$id]['quantity'] <= 1) {
@@ -187,6 +250,19 @@ class CartController extends Controller
                 ['path' => route('cart.index'), 'query' => $request->query()]
             );
             
+            $unavailableItems = [];
+            $productIds = array_keys($cart);
+            if (!empty($productIds)) {
+                $products = Product::with('ingredients')->whereIn('id', $productIds)->get()->keyBy('id');
+                
+                foreach ($cart as $productId => $item) {
+                    $product = $products->get($productId);
+                    if ($product && !$product->isAvailableInQuantity($item['quantity'])) {
+                        $unavailableItems[] = $item['name'];
+                    }
+                }
+            }
+            
             $itemsHtml = view('cart.partials.items', [
                 'paginatedCart' => $paginatedCart
             ])->render();
@@ -211,8 +287,9 @@ class CartController extends Controller
                 'total_pages' => $totalPages,
                 'needs_redirect' => $needsRedirect,
                 'redirect_page' => $currentPage,
-                'items_html' => $itemsHtml, // Add items HTML to response
-                'pagination_html' => $paginationHtml
+                'items_html' => $itemsHtml,
+                'pagination_html' => $paginationHtml,
+                'has_unavailable_items' => !empty($unavailableItems)
             ]);
         }
         

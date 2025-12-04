@@ -5,6 +5,22 @@
 @section('main_content')
 <div class="container min-vh-100 d-flex flex-column" style="margin-top: 120px">
     <section id="cart" class="my-5 py-5 flex-grow-1" style="margin-top: 120px; margin-bottom: 50px;">
+        {{-- Добавляем предупреждение о недоступных товарах --}}
+        <div id="unavailable-alert" class="alert alert-warning mb-4" style="background-color: #fff3cd; border-color: #ffecb5; color: #856404; @if(empty($unavailableItems)) display: none; @endif">
+            <div class="d-flex align-items-start">
+                <i class="iconify fs-4 me-3" data-icon="mdi:alert-circle-outline"></i>
+                <div id="unavailable-content">
+                    <strong>Внимание!</strong> Следующие товары в вашей корзине временно недоступны из-за нехватки ингредиентов:
+                    <ul class="mb-0 mt-2" id="unavailable-list">
+                        @foreach($unavailableItems as $itemName)
+                            <li>{{ $itemName }}</li>
+                        @endforeach
+                    </ul>
+                    <small class="d-block mt-2">Пожалуйста, удалите эти товары или уменьшите количество, чтобы оформить заказ.</small>
+                </div>
+            </div>
+        </div>
+        
         <div class="row g-md-5">
             <div class="col-md-8 pe-md-5">
                 <table class="table">
@@ -38,8 +54,13 @@
                         </div>
                     </div>
                     <div>
-                        @if (count($cart) > 0)
+                        {{-- Блокируем кнопку если есть недоступные товары --}}
+                        @if (count($cart) > 0 && empty($unavailableItems))
                             <a href="{{ route('checkout') }}" class="btn btn-primary" id="checkout-btn">Оформить заказ</a>
+                        @elseif (!empty($unavailableItems))
+                            <button class="btn btn-secondary" disabled id="checkout-btn" style="background-color: #6c757d; border-color: #6c757d; cursor: not-allowed;">
+                                Товары недоступны
+                            </button>
                         @else
                             <button class="btn btn-secondary" disabled id="checkout-btn">Корзина пуста</button>
                         @endif
@@ -57,6 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const cartCountElement = document.querySelector('.cart-count');
     const paginationContainer = document.getElementById('pagination-container');
     const checkoutBtn = document.getElementById('checkout-btn');
+    const unavailableAlert = document.getElementById('unavailable-alert');
     
     function getCurrentPage() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -74,19 +96,67 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function updateCheckoutButton(cartCount) {
-        if (cartCount > 0) {
+    function updateCheckoutButton(cartCount, hasUnavailable = false) {
+        // Обновляем видимость предупреждения
+        if (hasUnavailable) {
+            unavailableAlert.style.display = 'block';
+        } else {
+            unavailableAlert.style.display = 'none';
+        }
+        
+        // Обновляем состояние кнопки
+        if (cartCount > 0 && !hasUnavailable) {
             checkoutBtn.classList.remove('btn-secondary');
             checkoutBtn.classList.add('btn-primary');
             checkoutBtn.disabled = false;
             checkoutBtn.textContent = 'Оформить заказ';
-            checkoutBtn.href = '{{ route("checkout") }}';
+            if (checkoutBtn.tagName === 'BUTTON') {
+                const newLink = document.createElement('a');
+                newLink.href = '{{ route("checkout") }}';
+                newLink.className = 'btn btn-primary';
+                newLink.id = 'checkout-btn';
+                newLink.textContent = 'Оформить заказ';
+                checkoutBtn.parentNode.replaceChild(newLink, checkoutBtn);
+            } else {
+                checkoutBtn.href = '{{ route("checkout") }}';
+            }
+        } else if (hasUnavailable) {
+            if (checkoutBtn.tagName === 'A') {
+                const newBtn = document.createElement('button');
+                newBtn.className = 'btn btn-secondary';
+                newBtn.id = 'checkout-btn';
+                newBtn.disabled = true;
+                newBtn.textContent = 'Товары недоступны';
+                newBtn.style.backgroundColor = '#6c757d';
+                newBtn.style.borderColor = '#6c757d';
+                newBtn.style.cursor = 'not-allowed';
+                checkoutBtn.parentNode.replaceChild(newBtn, checkoutBtn);
+            } else {
+                checkoutBtn.classList.remove('btn-primary');
+                checkoutBtn.classList.add('btn-secondary');
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = 'Товары недоступны';
+                checkoutBtn.style.backgroundColor = '#6c757d';
+                checkoutBtn.style.borderColor = '#6c757d';
+                checkoutBtn.style.cursor = 'not-allowed';
+            }
         } else {
-            checkoutBtn.classList.remove('btn-primary');
-            checkoutBtn.classList.add('btn-secondary');
-            checkoutBtn.disabled = true;
-            checkoutBtn.textContent = 'Корзина пуста';
-            checkoutBtn.removeAttribute('href');
+            if (checkoutBtn.tagName === 'A') {
+                const newBtn = document.createElement('button');
+                newBtn.className = 'btn btn-secondary';
+                newBtn.id = 'checkout-btn';
+                newBtn.disabled = true;
+                newBtn.textContent = 'Корзина пуста';
+                checkoutBtn.parentNode.replaceChild(newBtn, checkoutBtn);
+            } else {
+                checkoutBtn.classList.remove('btn-primary');
+                checkoutBtn.classList.add('btn-secondary');
+                checkoutBtn.disabled = true;
+                checkoutBtn.textContent = 'Корзина пуста';
+                checkoutBtn.style.backgroundColor = '';
+                checkoutBtn.style.borderColor = '';
+                checkoutBtn.style.cursor = '';
+            }
         }
     }
     
@@ -106,14 +176,24 @@ document.addEventListener('DOMContentLoaded', function() {
         toast.setAttribute('aria-live', 'assertive');
         toast.setAttribute('aria-atomic', 'true');
         
+        const isError = type === 'error' || type === 'danger';
+        const isWarning = type === 'warning';
+        const iconColor = isError ? '#dc3545' : (isWarning ? '#ffc107' : '#28a745');
+        const title = isError ? 'Ошибка' : (isWarning ? 'Внимание' : 'Успешно');
+        const iconPath = isError 
+            ? 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'
+            : (isWarning 
+                ? 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'
+                : 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z');
+        
         toast.innerHTML = `
             <div class="toast-header">
                 <div class="toast-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${iconColor}">
+                        <path d="${iconPath}"/>
                     </svg>
                 </div>
-                <strong class="me-auto">Успешно</strong>
+                <strong class="me-auto">${title}</strong>
                 <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body">
@@ -124,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toastContainer.appendChild(toast);
         document.body.appendChild(toastContainer);
         
-        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
         bsToast.show();
         
         toast.addEventListener('hidden.bs.toast', function() {
@@ -171,6 +251,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                if (data.needs_redirect || data.item_removed) {
+                    window.location.href = `{{ route('cart.index') }}?page=${data.redirect_page || currentPage}`;
+                    return;
+                }
+                
                 if (data.items_html) {
                     cartItemsContainer.innerHTML = data.items_html;
                 }
@@ -179,14 +264,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     paginationContainer.innerHTML = data.pagination_html;
                 }
                 
-                if (data.needs_redirect) {
-                    window.location.href = `{{ route('cart.index') }}?page=${data.redirect_page}`;
-                    return;
-                }
-                
                 cartTotalElement.textContent = data.cart_total;
                 updateCartCount(data.cart_count);
-                updateCheckoutButton(data.cart_count);
+                
+                updateCheckoutButton(data.cart_count, data.has_unavailable_items);
+            } else {
+                showToast(data.message || 'Невозможно увеличить количество', 'warning');
             }
         })
         .catch(error => {
@@ -209,24 +292,23 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                if (data.items_html) {
-                    cartItemsContainer.innerHTML = data.items_html;
-                }
-                
-                if (paginationContainer && data.pagination_html) {
-                    paginationContainer.innerHTML = data.pagination_html;
-                }
-                
                 if (data.needs_redirect) {
                     window.location.href = `{{ route('cart.index') }}?page=${data.redirect_page}`;
-                    return;
+                } else {
+                    if (data.items_html) {
+                        cartItemsContainer.innerHTML = data.items_html;
+                    }
+                    
+                    if (paginationContainer && data.pagination_html) {
+                        paginationContainer.innerHTML = data.pagination_html;
+                    }
+                    
+                    cartTotalElement.textContent = data.cart_total;
+                    updateCartCount(data.cart_count);
+                    updateCheckoutButton(data.cart_count, data.has_unavailable_items);
+                    
+                    showToast('Товар удален из корзины', 'success');
                 }
-                
-                cartTotalElement.textContent = data.cart_total;
-                updateCartCount(data.cart_count);
-                updateCheckoutButton(data.cart_count);
-                
-                showToast('Товар удален из корзины');
             }
         })
         .catch(error => {

@@ -6,7 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
-use App\Models\Shift; // добавил импорт модели Shift
+use App\Models\Shift;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -125,7 +125,7 @@ class CheckoutController extends Controller
             $order->notes = $request->notes;
             $order->save();
 
-            // Создаем элементы заказа и списываем ингредиенты
+            // Создаем элементы заказа
             foreach ($cart as $id => $item) {
                 $orderItem = new OrderItem();
                 $orderItem->order_id = $order->id;
@@ -133,8 +133,9 @@ class CheckoutController extends Controller
                 $orderItem->quantity = $item['quantity'];
                 $orderItem->price = $item['price'];
                 $orderItem->save();
+            }
 
-                // Списываем ингредиенты для каждого товара
+            foreach ($cart as $id => $item) {
                 $product = $products->get($id);
                 if ($product) {
                     for ($i = 0; $i < $item['quantity']; $i++) {

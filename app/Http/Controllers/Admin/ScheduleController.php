@@ -53,7 +53,9 @@ class ScheduleController extends Controller
             'date.required' => 'Укажите дату',
             'date.after_or_equal' => 'Дата не может быть в прошлом',
             'start_time.required' => 'Укажите время начала',
+            'start_time.date_format' => 'Время начала должно быть в формате ЧЧ:МИ',
             'end_time.required' => 'Укажите время окончания',
+            'end_time.date_format' => 'Время окончания должно быть в формате ЧЧ:МИ',
             'end_time.after' => 'Время окончания должно быть позже времени начала',
         ]);
 
@@ -96,6 +98,14 @@ class ScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'notes' => 'nullable|string|max:500',
+        ], [
+            'user_id.required' => 'Выберите сотрудника',
+            'date.required' => 'Укажите дату',
+            'start_time.required' => 'Укажите время начала',
+            'start_time.date_format' => 'Время начала должно быть в формате ЧЧ:МИ',
+            'end_time.required' => 'Укажите время окончания',
+            'end_time.date_format' => 'Время окончания должно быть в формате ЧЧ:МИ',
+            'end_time.after' => 'Время окончания должно быть позже времени начала',
         ]);
 
         // Проверяем, нет ли конфликта с другими графиками
@@ -166,6 +176,15 @@ class ScheduleController extends Controller
             'schedules.*.date' => 'required|date',
             'schedules.*.start_time' => 'required|date_format:H:i',
             'schedules.*.end_time' => 'required|date_format:H:i|after:schedules.*.start_time',
+        ], [
+            'schedules.required' => 'Добавьте хотя бы один график',
+            'schedules.*.user_id.required' => 'Выберите сотрудника',
+            'schedules.*.date.required' => 'Укажите дату',
+            'schedules.*.start_time.required' => 'Укажите время начала',
+            'schedules.*.start_time.date_format' => 'Время начала должно быть в формате ЧЧ:МИ',
+            'schedules.*.end_time.required' => 'Укажите время окончания',
+            'schedules.*.end_time.date_format' => 'Время окончания должно быть в формате ЧЧ:МИ',
+            'schedules.*.end_time.after' => 'Время окончания должно быть позже времени начала',
         ]);
 
         $created = 0;

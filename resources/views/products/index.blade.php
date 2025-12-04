@@ -86,14 +86,24 @@
                                         <div class="mt-auto">
                                             <h3 class="secondary-font text-primary mb-2">{{ $product->price_product }} руб</h3>
                                             <!-- Заменил кнопку на форму для надежного добавления в корзину -->
-                                            <form action="{{ route('cart.add', $product->id) }}" method="POST" class="d-inline w-100">
-                                                @csrf
-                                                <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="btn btn-primary btn-sm w-100" 
+                                            @if($product->isAvailable())
+                                                <!-- Кнопка добавления активна при наличии ингредиентов -->
+                                                <form action="{{ route('cart.add', $product->id) }}" method="POST" class="d-inline w-100">
+                                                    @csrf
+                                                    <input type="hidden" name="quantity" value="1">
+                                                    <button type="submit" class="btn btn-primary btn-sm w-100" 
+                                                            style="border-radius: 0.5rem; padding: 0.6rem;">
+                                                        Добавить в корзину
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <!-- Кнопка заблокирована при нехватке ингредиентов -->
+                                                <button type="button" class="btn btn-secondary btn-sm w-100 disabled" 
+                                                        disabled
                                                         style="border-radius: 0.5rem; padding: 0.6rem;">
-                                                    Добавить в корзину
+                                                    Нет в наличии
                                                 </button>
-                                            </form>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

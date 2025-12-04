@@ -44,7 +44,7 @@
           <div class="product-price pt-3 pb-3">
             <strong class="text-primary display-6 fw-bold">{{ $product->price_product }} руб</strong>
           </div>
-          <p>{{ $product->description_product }}</p>
+          <p style="word-wrap: break-word; overflow-wrap: break-word; white-space: normal;">{{ $product->description_product }}</p>
           <div class="cart-wrap">
             <div class="product-quantity pt-2">
               <div class="stock-button-wrap">
@@ -67,7 +67,11 @@
                       </button>
                     </span>
                   </div>
-                  <button type="submit" class="btn btn-primary" id="add-to-cart-btn">Добавить в корзину</button>
+                  @if($product->isAvailable())
+                    <button type="submit" class="btn btn-primary" id="add-to-cart-btn">Добавить в корзину</button>
+                  @else
+                    <button type="button" class="btn btn-secondary disabled" disabled>Нет в наличии</button>
+                  @endif
                 </form>
               </div>
             </div>
@@ -122,14 +126,21 @@ document.addEventListener('DOMContentLoaded', function() {
         toast.setAttribute('aria-live', 'assertive');
         toast.setAttribute('aria-atomic', 'true');
         
+        const isError = type === 'error';
+        const iconColor = isError ? '#dc3545' : '#28a745';
+        const title = isError ? 'Ошибка' : 'Успешно';
+        const iconPath = isError 
+            ? 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'
+            : 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z';
+        
         toast.innerHTML = `
             <div class="toast-header">
                 <div class="toast-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${iconColor}">
+                        <path d="${iconPath}"/>
                     </svg>
                 </div>
-                <strong class="me-auto">Успешно</strong>
+                <strong class="me-auto">${title}</strong>
                 <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body">
@@ -140,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toastContainer.appendChild(toast);
         document.body.appendChild(toastContainer);
         
-        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
         bsToast.show();
         
         toast.addEventListener('hidden.bs.toast', function() {
@@ -150,6 +161,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // AJAX отправка формы
     form.addEventListener('submit', function(e) {
+        if (addToCartBtn.disabled) {
+            return;
+        }
+        
         e.preventDefault();
         
         const productId = {{ $product->id }};
@@ -187,13 +202,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Сбрасываем количество на 1
                 quantityInput.value = 1;
+            } else {
+                showToast(data.message || 'Ошибка при добавлении товара', 'error');
             }
             addToCartBtn.textContent = originalText;
             addToCartBtn.disabled = false;
         })
         .catch(error => {
             console.error('Ошибка:', error);
-            alert('Произошла ошибка при добавлении товара в корзину');
+            showToast('Произошла ошибка при добавлении товара в корзину', 'error');
             addToCartBtn.textContent = originalText;
             addToCartBtn.disabled = false;
         });

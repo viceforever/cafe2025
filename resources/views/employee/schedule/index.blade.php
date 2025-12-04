@@ -38,13 +38,24 @@
                         $daySchedule = $schedules->get($day->format('Y-m-d'));
                         $isToday = $day->isToday();
                         $isPast = $day->isPast();
+                        
+                        $dayNames = [
+                            'Monday' => 'Понедельник',
+                            'Tuesday' => 'Вторник',
+                            'Wednesday' => 'Среда',
+                            'Thursday' => 'Четверг',
+                            'Friday' => 'Пятница',
+                            'Saturday' => 'Суббота',
+                            'Sunday' => 'Воскресенье'
+                        ];
+                        $russianDayName = $dayNames[$day->format('l')] ?? $day->format('l');
                     @endphp
                     <div class="col-md-12 mb-3">
                         <div class="card {{ $isToday ? 'border-primary' : '' }}">
                             <div class="card-header {{ $isToday ? 'bg-primary text-white' : '' }}">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0">
-                                        {{ $day->format('l, d.m.Y') }}
+                                        {{ $russianDayName }}, {{ $day->format('d.m.Y') }}
                                         @if($isToday)
                                             <span class="badge bg-light text-primary ms-2">Сегодня</span>
                                         @endif

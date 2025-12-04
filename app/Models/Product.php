@@ -39,6 +39,17 @@ class Product extends Model
         return true;
     }
 
+    public function isAvailableInQuantity($quantity)
+    {
+        foreach ($this->ingredients as $ingredient) {
+            $totalNeeded = $ingredient->pivot->quantity_needed * $quantity;
+            if (!$ingredient->canMakeProduct($totalNeeded)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public function reduceIngredients()
     {
         foreach ($this->ingredients as $ingredient) {
@@ -51,5 +62,23 @@ class Product extends Model
         foreach ($this->ingredients as $ingredient) {
             $ingredient->restoreQuantity($ingredient->pivot->quantity_needed);
         }
+    }
+
+    public function getMaxAvailableQuantity()
+    {
+        if ($this->ingredients->isEmpty()) {
+            return PHP_INT_MAX; // Если нет ингредиентов, считаем товар всегда доступным
+        }
+
+        $minQuantity = PHP_INT_MAX;
+        
+        foreach ($this->ingredients as $ingredient) {
+            $availableQuantity = intval($ingredient->available_quantity / $ingredient->pivot->quantity_needed);
+            if ($availableQuantity < $minQuantity) {
+                $minQuantity = $availableQuantity;
+            }
+        }
+        
+        return $minQuantity === PHP_INT_MAX ? 0 : $minQuantity;
     }
 }
