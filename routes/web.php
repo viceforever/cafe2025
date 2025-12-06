@@ -31,6 +31,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::get('/', [ProductController::class, 'index'])->name('home');
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
+Route::post('/product/{id}/check-quantity', [ProductController::class, 'checkQuantity'])->name('product.check-quantity');
 
 // Поиск товара
 Route::get('/search', [ProductController::class, 'search'])->name('products.search');

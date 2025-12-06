@@ -85,17 +85,14 @@
                                         </span>
                                         <div class="mt-auto">
                                             <h3 class="secondary-font text-primary mb-2">{{ $product->price_product }} руб</h3>
-                                            <!-- Заменил кнопку на форму для надежного добавления в корзину -->
+                                            <!-- Заменил форму на кнопку с AJAX для обработки ошибок добавления -->
                                             @if($product->isAvailable())
                                                 <!-- Кнопка добавления активна при наличии ингредиентов -->
-                                                <form action="{{ route('cart.add', $product->id) }}" method="POST" class="d-inline w-100">
-                                                    @csrf
-                                                    <input type="hidden" name="quantity" value="1">
-                                                    <button type="submit" class="btn btn-primary btn-sm w-100" 
-                                                            style="border-radius: 0.5rem; padding: 0.6rem;">
-                                                        Добавить в корзину
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-primary btn-sm w-100 add-to-cart-main" 
+                                                        data-product-id="{{ $product->id }}"
+                                                        style="border-radius: 0.5rem; padding: 0.6rem;">
+                                                    Добавить в корзину
+                                                </button>
                                             @else
                                                 <!-- Кнопка заблокирована при нехватке ингредиентов -->
                                                 <button type="button" class="btn btn-secondary btn-sm w-100 disabled" 
@@ -216,4 +213,112 @@
       </div>
     </div>
   </section>
+
+<!-- Добавил AJAX обработчик для добавления товара в корзину с главной страницы -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Функция для отображения сообщений об ошибках
+    function showToast(message, type = 'success') {
+        const existingToast = document.querySelector('.custom-toast');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        toastContainer.style.cssText = 'position: fixed; top: 100px; right: 20px; z-index: 9999;';
+        
+        const toast = document.createElement('div');
+        toast.className = 'toast custom-toast show';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        const isError = type === 'error' || type === 'danger';
+        const iconColor = isError ? '#dc3545' : '#28a745';
+        const title = isError ? 'Ошибка' : 'Успешно';
+        const iconPath = isError 
+            ? 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'
+            : 'M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z';
+        
+        toast.innerHTML = `
+            <div class="toast-header">
+                <div class="toast-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${iconColor}">
+                        <path d="${iconPath}"/>
+                    </svg>
+                </div>
+                <strong class="me-auto">${title}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+        
+        const bsToast = new bootstrap.Toast(toast, { delay: 5000 });
+        bsToast.show();
+        
+        toast.addEventListener('hidden.bs.toast', function() {
+            toastContainer.remove();
+        });
+    }
+    
+    // Обработчик для кнопок "Добавить в корзину" на главной странице
+    document.querySelectorAll('.add-to-cart-main').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const productId = this.dataset.productId;
+            const originalText = this.textContent;
+            const btn = this;
+            
+            btn.disabled = true;
+            btn.textContent = 'Добавление...';
+            
+            fetch(`/cart/add/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ quantity: 1 })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast('Товар добавлен в корзину', 'success');
+                    
+                    // Обновляем счетчик корзины в шапке
+                    const cartCountElement = document.querySelector('.cart-count');
+                    if (cartCountElement && data.cart_count) {
+                        cartCountElement.textContent = data.cart_count;
+                        cartCountElement.style.display = 'flex';
+                    }
+                } else {
+                    // Показываем сообщение об ошибке от сервера
+                    showToast(data.message || 'Ошибка при добавлении товара', 'error');
+                }
+                btn.textContent = originalText;
+                btn.disabled = false;
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                showToast('Произошла ошибка при добавлении товара в корзину', 'error');
+                btn.textContent = originalText;
+                btn.disabled = false;
+            });
+        });
+    });
+});
+</script>
 @endsection

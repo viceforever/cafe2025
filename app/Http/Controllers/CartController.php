@@ -67,7 +67,7 @@ class CartController extends Controller
         if (!$product->isAvailableInQuantity($newQuantity)) {
             $errorMessage = $maxAvailable > 0 
                 ? "К сожалению, на данный момент можно заказать не более {$maxAvailable} шт. этого товара из-за нехватки ингредиентов."
-                : "К сожалению, выбранное количество данного блюда временно недоступно. Попробуйте выбрать позиций меньше.";
+                : "К сожалению, мы не можем приготовить больше количества данного блюда.";
                 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
@@ -199,7 +199,7 @@ class CartController extends Controller
                     $maxAvailable = $product->getMaxAvailableQuantity();
                     $errorMessage = $maxAvailable > 0 
                         ? "На данный момент можно заказать не более {$maxAvailable} шт. этого товара."
-                        : "К сожалению, выбранное количество данного блюда временно недоступно. Попробуйте выбрать позиций меньше.";
+                        : "К сожалению, мы не можем приготовить больше количества данного блюда.";
                         
                     if ($request->ajax() || $request->wantsJson()) {
                         return response()->json([

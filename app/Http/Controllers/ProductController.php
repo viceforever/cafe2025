@@ -34,14 +34,63 @@ class ProductController extends Controller
 
     public function show($id)
     {
-        $product = Product::findOrFail($id);  // Нахождение продукта по ID
-        return view('products.product', compact('product'));
+        $product = Product::with('ingredients')->findOrFail($id);
+        $maxAvailableQuantity = $product->getMaxAvailableQuantity();
+        
+        $cart = session()->get('cart', []);
+        $quantityInCart = isset($cart[$id]) ? $cart[$id]['quantity'] : 0;
+        
+        $availableToAdd = $maxAvailableQuantity - $quantityInCart;
+        
+        return view('products.product', compact('product', 'maxAvailableQuantity', 'quantityInCart', 'availableToAdd'));
+    }
+
+    public function checkQuantity(Request $request, $id)
+    {
+        $product = Product::with('ingredients')->findOrFail($id);
+        $quantity = intval($request->input('quantity', 1));
+        
+        $cart = session()->get('cart', []);
+        $quantityInCart = isset($cart[$id]) ? $cart[$id]['quantity'] : 0;
+        $totalQuantity = $quantity + $quantityInCart; // Общее количество с учетом корзины
+        
+        $maxAvailable = $product->getMaxAvailableQuantity();
+        
+        if (!$product->isAvailableInQuantity($totalQuantity)) {
+            $availableToAdd = max(0, $maxAvailable - $quantityInCart);
+            $errorMessage = $availableToAdd > 0 
+                ? "На данный момент можно добавить в корзину еще не более {$availableToAdd} шт. этого товара (уже в корзине: {$quantityInCart} шт.)."
+                : "К сожалению, мы не можем приготовить больше количества данного блюда.";
+                
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+                'maxAvailable' => $availableToAdd
+            ]);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'maxAvailable' => $maxAvailable - $quantityInCart,
+            'message' => 'Количество доступно'
+        ]);
     }
 
     public function addToCart(Request $request,$id)
     {
         $product = Product::findOrFail($id);
         $quantity = $request->input('quantity', 1);
+        
+        if (!$product->isAvailableInQuantity($quantity)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'К сожалению, мы не можем приготовить больше количества данного блюда.'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'К сожалению, мы не можем приготовить больше количества данного блюда.');
+        }
+        
         $cart = session()->get('cart', []);
         
         if(isset($cart[$id])) {
@@ -57,6 +106,14 @@ class ProductController extends Controller
         }
         
         session()->put('cart', $cart);
+        
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Товар добавлен в корзину!'
+            ]);
+        }
+        
         return redirect()->back()->with('success', 'Товар добавлен в корзину!');
     }
 
