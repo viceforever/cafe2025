@@ -49,10 +49,10 @@
     <!-- Блок для отображения уведомлений -->
     
     @if(isset($query))
-        <h2>Результаты поиска для: {{ $query }}</h2>
+        <h2>Результаты поиска для: "{{ $query }}"</h2>
     @endif
     @if($products->isEmpty())
-        <p>Ничего не найдено.</p>
+        <p>Ничего не найдено</p>
     @else
     @foreach($categories as $category)
     @if($products->has($category->id))
@@ -192,7 +192,7 @@
                     <iconify-icon icon="mingcute:dinner-line" class="quote-icon text-primary"></iconify-icon>
                   </div>
                   <div class="col-md-10 mt-md-5 p-5 pt-0 pt-md-5">
-                    <p class="testimonial-content fs-2">Тут будет умный текст.</p>
+                    <p class="testimonial-content fs-2">Следующая страница</p>
                   </div>
                 </div>
               </div>
@@ -202,7 +202,7 @@
                     <iconify-icon icon="mingcute:dinner-line" class="quote-icon text-primary"></iconify-icon>
                   </div>
                   <div class="col-md-10 mt-md-5 p-5 pt-0 pt-md-5">
-                    <p class="testimonial-content fs-2">И тут тоже.</p>
+                    <p class="testimonial-content fs-2">Следующая страница</p>
                   </div>
                 </div>
               </div>

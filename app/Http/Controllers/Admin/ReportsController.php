@@ -8,9 +8,11 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Ingredient;
 use App\Models\CategoryProduct;
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Response;
 
 class ReportsController extends Controller
@@ -21,7 +23,7 @@ class ReportsController extends Controller
         $monthlyRevenue = Order::whereMonth('created_at', now()->month)
                               ->whereYear('created_at', now()->year)
                               ->sum('total_amount');
-        $lowStockIngredients = Ingredient::whereRaw('quantity <= min_quantity')->count();
+        $lowStockIngredients = Ingredient::whereColumn('quantity', '<=', 'min_quantity')->count();
         
         return view('admin.reports.index', compact('todayOrders', 'monthlyRevenue', 'lowStockIngredients'));
     }
@@ -34,7 +36,7 @@ class ReportsController extends Controller
         $productId = $request->get('product_id');
 
         $query = Order::whereBetween('created_at', [$startDate, $endDate])
-                     ->whereNotIn('status', ['Отменен'])
+                     ->whereNotIn('status', [OrderStatus::CANCELLED])
                      ->with(['orderItems' => function($q) {
                          $q->with(['product' => function($pq) {
                              $pq->with('category');
@@ -58,7 +60,7 @@ class ReportsController extends Controller
         $orders = $query->orderBy('created_at', 'desc')->paginate(50);
 
         $stats = Order::whereBetween('created_at', [$startDate, $endDate])
-                     ->whereNotIn('status', ['Отменен'])
+                     ->whereNotIn('status', [OrderStatus::CANCELLED])
                      ->selectRaw('COUNT(*) as total_orders, SUM(total_amount) as total_revenue')
                      ->first();
 
@@ -70,7 +72,7 @@ class ReportsController extends Controller
             ->join('order_items', 'orders.id', '=', 'order_items.order_id')
             ->join('products', 'order_items.product_id', '=', 'products.id')
             ->whereBetween('orders.created_at', [$startDate, $endDate])
-            ->whereNotIn('orders.status', ['Отменен'])
+            ->whereNotIn('orders.status', [OrderStatus::CANCELLED])
             ->select(
                 'products.id',
                 'products.name_product',
@@ -103,7 +105,7 @@ class ReportsController extends Controller
 
         // Фильтр по низким остаткам
         if ($lowStock) {
-            $query->whereRaw('quantity <= min_quantity');
+            $query->whereColumn('quantity', '<=', 'min_quantity');
         }
 
         // Фильтр по минимальному количеству
@@ -182,7 +184,7 @@ class ReportsController extends Controller
     private function getSalesReportData($startDate, $endDate, $categoryId = null, $productId = null)
     {
         $query = Order::whereBetween('created_at', [$startDate, $endDate])
-                     ->whereNotIn('status', ['Отменен'])
+                     ->whereNotIn('status', [OrderStatus::CANCELLED])
                      ->with(['orderItems' => function($q) {
                          $q->with(['product' => function($pq) {
                              $pq->with('category');
@@ -233,7 +235,7 @@ class ReportsController extends Controller
         $query = Ingredient::query();
 
         if ($lowStock) {
-            $query->whereRaw('quantity <= min_quantity');
+            $query->whereColumn('quantity', '<=', 'min_quantity');
         }
 
         if ($minQuantity > 0) {
@@ -268,7 +270,7 @@ class ReportsController extends Controller
     {
         $orderItems = OrderItem::whereHas('order', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate])
-                  ->whereNotIn('status', ['Отменен']);
+                  ->whereNotIn('status', [OrderStatus::CANCELLED]);
         })->with('product.ingredients')->get();
 
         $totalUsage = 0;
@@ -288,7 +290,7 @@ class ReportsController extends Controller
             ->join('order_items', 'orders.id', '=', 'order_items.order_id')
             ->join('product_ingredients', 'order_items.product_id', '=', 'product_ingredients.product_id')
             ->whereBetween('orders.created_at', [$startDate, $endDate])
-            ->whereNotIn('orders.status', ['Отменен'])
+            ->whereNotIn('orders.status', [OrderStatus::CANCELLED])
             ->whereIn('product_ingredients.ingredient_id', $ingredientIds)
             ->select(
                 'product_ingredients.ingredient_id',

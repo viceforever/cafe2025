@@ -9,6 +9,7 @@ use App\Models\Ingredient;
 use App\Models\Shift;
 use App\Models\User;
 use App\Models\Schedule;
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -25,24 +26,15 @@ class ManagerController extends Controller
 
         $shiftStats = null;
         if ($activeShift) {
-            $shiftOrders = Order::where('shift_id', $activeShift->id)
-                               ->where('status', '!=', 'Отменен')
-                               ->get();
-            $shiftStats = [
-                'orders_count' => $shiftOrders->count(),
-                'total_revenue' => $shiftOrders->sum('total_amount'),
-                'cash_revenue' => $shiftOrders->where('payment_method', 'cash')->sum('total_amount'),
-                'card_revenue' => $shiftOrders->where('payment_method', 'card')->sum('total_amount'),
-                'completed_orders' => $shiftOrders->where('status', 'Выдан')->count(),
-                'pending_orders' => $shiftOrders->whereIn('status', ['В обработке', 'Подтвержден', 'Готовится', 'Готов к выдаче'])->count()
-            ];
+            // Используем метод getStats из модели Shift для устранения дублирования
+            $shiftStats = $activeShift->getStats();
         }
 
         $today = Carbon::now('Asia/Irkutsk')->toDateString();
         $todayOrders = Order::whereDate('created_at', $today)->count();
         $todayRevenue = Order::whereDate('created_at', $today)->sum('total_amount');
-        $lowStockIngredients = Ingredient::whereRaw('quantity <= min_quantity')->count();
-        $pendingOrders = Order::whereIn('status', ['В обработке', 'Готовится'])->count();
+        $lowStockIngredients = Ingredient::whereColumn('quantity', '<=', 'min_quantity')->count();
+        $pendingOrders = Order::whereIn('status', [OrderStatus::PENDING, OrderStatus::COOKING])->count();
 
         // Retrieve completed shift data from session
         $completedShiftData = session('completed_shift', null);
@@ -118,22 +110,17 @@ class ManagerController extends Controller
             'notes' => $request->notes
         ]);
 
-        DB::table('shifts')
-            ->where('id', $activeShift->id)
-            ->update([
-                'start_time' => $startTimeLocal,
-                'end_time' => $endTimeLocal,
-                'status' => 'completed',
-                'notes' => $request->notes,
-                'updated_at' => now()
-            ]);
+        // Используем метод модели вместо DB::table
+        $activeShift->endShift($endTimeLocal, $request->notes);
+        
+        // Обновляем start_time отдельно, если он был изменен
+        if ($activeShift->start_time != $startTimeLocal) {
+            $activeShift->update(['start_time' => $startTimeLocal]);
+        }
 
         Log::info('[SHIFT DEBUG] Обновили смену в БД', [
             'shift_id' => $activeShift->id
         ]);
-
-        // Перезагружаем модель из базы данных
-        $activeShift->refresh();
         
         Log::info('[SHIFT DEBUG] После обновления', [
             'shift_id' => $activeShift->id,
@@ -168,16 +155,19 @@ class ManagerController extends Controller
         // Изменил пагинацию с 20 на 4 заказа
         $orders = $query->paginate(4)->appends($request->query());
         
-        // Получаем все возможные статусы для фильтра
-        $statuses = ['В обработке', 'Подтвержден', 'Готовится', 'Готов к выдаче', 'Выдан', 'Отменен'];
+        // Получаем все возможные статусы для фильтра из констант
+        $statuses = OrderStatus::all();
 
+        foreach ($orders as $order) {
+            $order->allowedTransitions = \App\Enums\OrderStatus::$allowedTransitions[$order->status] ?? [];
+        }
         return view('manager.orders.index', compact('orders', 'statuses'));
     }
 
     public function updateOrderStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|in:В обработке,Подтвержден,Готовится,Готов к выдаче,Выдан,Отменен'
+            'status' => 'required|in:' . implode(',', OrderStatus::all())
         ]);
 
         $oldStatus = $order->status;
@@ -185,18 +175,40 @@ class ManagerController extends Controller
 
         DB::beginTransaction();
         try {
-            if ($oldStatus === 'Отменен' && $newStatus !== 'Отменен') {
+            // Загружаем связанные данные для предотвращения N+1
+            $order->load('orderItems.product.ingredients');
+            
+            // Восстановление заказа из CANCELLED
+            // Ингредиенты могли быть восстановлены при отмене (если отмена была из PENDING/CONFIRMED)
+            // Поэтому нужно проверить доступность и списать ингредиенты
+            if ($oldStatus === OrderStatus::CANCELLED && $newStatus !== OrderStatus::CANCELLED) {
+                // Сначала проверяем доступность
+                $unavailableProducts = [];
+                foreach ($order->orderItems as $orderItem) {
+                    $product = $orderItem->product;
+                    if ($product && !$product->isAvailableInQuantity($orderItem->quantity)) {
+                        $unavailableProducts[] = $product->name_product;
+                    }
+                }
+                
+                if (!empty($unavailableProducts)) {
+                    DB::rollBack();
+                    $errorMessage = 'Невозможно восстановить заказ. Недостаточно ингредиентов для товаров: ' . implode(', ', $unavailableProducts);
+                    return redirect()->back()->with('error', $errorMessage);
+                }
+                
+                // Если доступность подтверждена, списываем ингредиенты
                 foreach ($order->orderItems as $orderItem) {
                     $product = $orderItem->product;
                     if ($product) {
-                        for ($i = 0; $i < $orderItem->quantity; $i++) {
-                            $product->reduceIngredients();
-                        }
+                        $product->reduceIngredientsInQuantity($orderItem->quantity);
                     }
                 }
             }
 
-            if ($newStatus === 'Готовится' && $oldStatus !== 'Готовится') {
+            // Переход в статус COOKING - проверяем доступность ингредиентов
+            // Ингредиенты уже списаны при создании заказа, но нужно убедиться, что их достаточно
+            if ($newStatus === OrderStatus::COOKING && $oldStatus !== OrderStatus::COOKING) {
                 $missingIngredients = [];
                 
                 foreach ($order->orderItems as $orderItem) {
@@ -219,19 +231,31 @@ class ManagerController extends Controller
                 }
                 
                 if (!empty($missingIngredients)) {
-                    DB::rollback();
+                    DB::rollBack();
                     $errorMessage = 'Невозможно начать готовку. Недостаточно ингредиентов: ' . implode(', ', $missingIngredients);
                     return redirect()->back()->with('error', $errorMessage);
                 }
             }
             
-            if ($newStatus === 'Отменен' && in_array($oldStatus, ['В обработке', 'Подтвержден'])) {
+            // Откат из COOKING в более ранние статусы - восстанавливаем ингредиенты
+            // (так как готовка отменена, ингредиенты еще не использованы)
+            if (in_array($oldStatus, [OrderStatus::COOKING, OrderStatus::READY]) 
+                && in_array($newStatus, [OrderStatus::PENDING, OrderStatus::CONFIRMED])) {
                 foreach ($order->orderItems as $orderItem) {
                     $product = $orderItem->product;
                     if ($product) {
-                        for ($i = 0; $i < $orderItem->quantity; $i++) {
-                            $product->restoreIngredients();
-                        }
+                        $product->restoreIngredientsInQuantity($orderItem->quantity);
+                    }
+                }
+            }
+            
+            // Отмена заказа - восстанавливаем ингредиенты только если они еще не использованы
+            if ($newStatus === OrderStatus::CANCELLED && OrderStatus::canRestoreIngredients($oldStatus)) {
+                // Отменяем заказ - восстанавливаем ингредиенты
+                foreach ($order->orderItems as $orderItem) {
+                    $product = $orderItem->product;
+                    if ($product) {
+                        $product->restoreIngredientsInQuantity($orderItem->quantity);
                     }
                 }
             }
@@ -240,23 +264,30 @@ class ManagerController extends Controller
             DB::commit();
 
             $message = match(true) {
-                $oldStatus === 'Отменен' && $newStatus !== 'Отменен' => 'Статус изменен, ингредиенты зарезервированы',
-                $newStatus === 'Отменен' && in_array($oldStatus, ['В обработке', 'Подтвержден']) => 'Статус изменен на "Отменен", ингредиенты восстановлены',
-                $newStatus === 'Отменен' => 'Статус изменен на "Отменен"',
+                $oldStatus === OrderStatus::CANCELLED && $newStatus !== OrderStatus::CANCELLED => 'Статус изменен, ингредиенты зарезервированы',
+                $newStatus === OrderStatus::CANCELLED && OrderStatus::canRestoreIngredients($oldStatus) => 'Статус изменен на "Отменен", ингредиенты восстановлены',
+                $newStatus === OrderStatus::CANCELLED => 'Статус изменен на "Отменен"',
                 default => 'Статус заказа обновлен'
             };
 
             return redirect()->back()->with('success', $message);
             
         } catch (\Exception $e) {
-            DB::rollback();
+            DB::rollBack();
+            Log::error('Ошибка при изменении статуса заказа', [
+                'order_id' => $order->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()->with('error', 'Ошибка при изменении статуса: ' . $e->getMessage());
         }
     }
 
     public function confirmOrder(Order $order)
     {
-        $order->update(['status' => 'Подтвержден']);
+        $order->update(['status' => OrderStatus::CONFIRMED]);
         
         return redirect()->back()->with('success', 'Заказ подтвержден');
     }
@@ -265,29 +296,34 @@ class ManagerController extends Controller
     {
         DB::beginTransaction();
         try {
-            if ($order->status !== 'Отменен') {
-                if (in_array($order->status, ['В обработке', 'Подтвержден'])) {
+            $oldStatus = $order->status;
+            
+            if ($order->status !== OrderStatus::CANCELLED) {
+                if (OrderStatus::canRestoreIngredients($order->status)) {
                     foreach ($order->orderItems as $orderItem) {
                         $product = $orderItem->product;
                         if ($product) {
-                            for ($i = 0; $i < $orderItem->quantity; $i++) {
-                                $product->restoreIngredients();
-                            }
+                            $product->restoreIngredientsInQuantity($orderItem->quantity);
                         }
                     }
                 }
             }
             
-            $order->update(['status' => 'Отменен']);
+            $order->update(['status' => OrderStatus::CANCELLED]);
             DB::commit();
             
-            $message = in_array($order->status, ['В обработке', 'Подтвержден'])
+            $message = OrderStatus::canRestoreIngredients($oldStatus)
                 ? 'Заказ отменен, ингредиенты восстановлены'
                 : 'Заказ отменен';
             
             return redirect()->back()->with('success', $message);
         } catch (\Exception $e) {
-            DB::rollback();
+            DB::rollBack();
+            Log::error('Ошибка при отмене заказа', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()->with('error', 'Ошибка при отмене заказа: ' . $e->getMessage());
         }
     }
@@ -296,7 +332,7 @@ class ManagerController extends Controller
     {
         // Добавил пагинацию для ингредиентов
         $ingredients = Ingredient::orderBy('name')->paginate(4);
-        $lowStockIngredients = Ingredient::whereRaw('quantity <= min_quantity')->get();
+        $lowStockIngredients = Ingredient::whereColumn('quantity', '<=', 'min_quantity')->get();
 
         return view('manager.ingredients.index', compact('ingredients', 'lowStockIngredients'));
     }
@@ -348,17 +384,7 @@ class ManagerController extends Controller
             return response()->json(['error' => 'Нет активной смены'], 404);
         }
 
-        $shiftOrders = Order::where('shift_id', $activeShift->id)
-                           ->where('status', '!=', 'Отменен')
-                           ->get();
-        
-        return response()->json([
-            'orders_count' => $shiftOrders->count(),
-            'total_revenue' => $shiftOrders->sum('total_amount'),
-            'cash_revenue' => $shiftOrders->where('payment_method', 'cash')->sum('total_amount'),
-            'card_revenue' => $shiftOrders->where('payment_method', 'card')->sum('total_amount'),
-            'completed_orders' => $shiftOrders->where('status', 'Выдан')->count(),
-            'pending_orders' => $shiftOrders->whereIn('status', ['В обработке', 'Подтвержден', 'Готовится', 'Готов к выдаче'])->count()
-        ]);
+        // Используем метод getStats из модели для устранения дублирования
+        return response()->json($activeShift->getStats());
     }
 }

@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Enums\OrderStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 
 class Shift extends Model
 {
@@ -43,7 +43,7 @@ class Shift extends Model
     public function getActiveOrdersAttribute()
     {
         if ($this->relationLoaded('orders')) {
-            return $this->orders->where('status', '!=', 'Отменен');
+            return $this->orders->where('status', '!=', OrderStatus::CANCELLED);
         }
         return collect();
     }
@@ -72,32 +72,60 @@ class Shift extends Model
         return $this->status === 'active';
     }
 
-    public function calculateStats()
+    /**
+     * Получить статистику по смене
+     * 
+     * @return array
+     */
+    public function getStats()
     {
-        $orders = $this->orders()->where('status', '!=', 'Отменен')->get();
-
-        DB::table('shifts')
-            ->where('id', $this->id)
-            ->update([
-                'total_orders' => $orders->count(),
-                'total_revenue' => $orders->sum('total_amount'),
-                'cash_sales' => $orders->where('payment_method', 'cash')->sum('total_amount'),
-                'card_sales' => $orders->where('payment_method', 'card')->sum('total_amount')
-            ]);
+        $orders = $this->orders()->where('status', '!=', OrderStatus::CANCELLED)->get();
+        
+        return [
+            'orders_count' => $orders->count(),
+            'total_revenue' => $orders->sum('total_amount'),
+            'cash_revenue' => $orders->where('payment_method', 'cash')->sum('total_amount'),
+            'card_revenue' => $orders->where('payment_method', 'card')->sum('total_amount'),
+            'completed_orders' => $orders->where('status', OrderStatus::COMPLETED)->count(),
+            'pending_orders' => $orders->whereIn('status', [
+                OrderStatus::PENDING,
+                OrderStatus::CONFIRMED,
+                OrderStatus::COOKING,
+                OrderStatus::READY
+            ])->count()
+        ];
     }
 
+    /**
+     * Рассчитать и сохранить статистику смены
+     */
+    public function calculateStats()
+    {
+        $stats = $this->getStats();
+        
+        $this->update([
+            'total_orders' => $stats['orders_count'],
+            'total_revenue' => $stats['total_revenue'],
+            'cash_sales' => $stats['cash_revenue'],
+            'card_sales' => $stats['card_revenue']
+        ]);
+    }
+
+    /**
+     * Завершить смену
+     * 
+     * @param string $endTime
+     * @param string|null $notes
+     * @return $this
+     */
     public function endShift($endTime, $notes = null)
     {
-        DB::table('shifts')
-            ->where('id', $this->id)
-            ->update([
-                'end_time' => $endTime,
-                'status' => 'completed',
-                'notes' => $notes,
-                'updated_at' => now()
-            ]);
+        $this->update([
+            'end_time' => $endTime,
+            'status' => 'completed',
+            'notes' => $notes
+        ]);
         
-        $this->refresh();
         return $this;
     }
 }

@@ -10,31 +10,20 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
-
+        // Авторизация проверяется middleware в routes
         $categories = CategoryProduct::withCount('products')->get();
         return view('admin.categories.index', compact('categories'));
     }
 
     public function create(Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
+        // Авторизация проверяется middleware в routes
         return view('admin.categories.create');
     }
 
     public function store(Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
-
+        // Авторизация проверяется middleware в routes
         $request->validate([
             'name_category' => 'required|string|max:255|unique:category_products',
         ], [
@@ -48,21 +37,13 @@ class CategoryController extends Controller
 
     public function edit(CategoryProduct $category,Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
-
+        // Авторизация проверяется middleware в routes
         return view('admin.categories.edit', compact('category'));
     }
 
     public function update(Request $request, CategoryProduct $category)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
-
+        // Авторизация проверяется middleware в routes
         $request->validate([
             'name_category' => 'required|string|max:255|unique:category_products,name_category,' . $category->id,
         ]);
@@ -74,11 +55,7 @@ class CategoryController extends Controller
 
     public function destroy(CategoryProduct $category,Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
-
+        // Авторизация проверяется middleware в routes
         $productCount = $category->products()->count();
         
         $category->delete();

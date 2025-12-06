@@ -8,6 +8,11 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class CartController extends Controller
 {
+    /**
+     * Количество элементов корзины на странице
+     */
+    private const CART_ITEMS_PER_PAGE = 3;
+
     public function index(Request $request)
     {
         $cart = session()->get('cart', []);
@@ -25,7 +30,7 @@ class CartController extends Controller
             }
         }
         
-        $perPage = 3;
+        $perPage = self::CART_ITEMS_PER_PAGE;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $cartItems = collect($cart);
         
@@ -66,7 +71,7 @@ class CartController extends Controller
         
         if (!$product->isAvailableInQuantity($newQuantity)) {
             $errorMessage = $maxAvailable > 0 
-                ? "К сожалению, на данный момент можно заказать не более {$maxAvailable} шт. этого товара из-за нехватки ингредиентов."
+                ? "К сожалению, на данный момент можно заказать не более {$maxAvailable} шт. этого товара."
                 : "К сожалению, мы не можем приготовить больше количества данного блюда.";
                 
             if ($request->ajax() || $request->wantsJson()) {
@@ -126,7 +131,7 @@ class CartController extends Controller
                 return $carry + ($item['price'] * $item['quantity']);
             }, 0);
             
-            $perPage = 3;
+            $perPage = self::CART_ITEMS_PER_PAGE;
             $currentPage = $request->input('page', 1);
             $totalItems = count($cart);
             $totalPages = ceil($totalItems / $perPage);
@@ -230,7 +235,7 @@ class CartController extends Controller
             $itemTotal = isset($cart[$id]) ? $cart[$id]['price'] * $cart[$id]['quantity'] : 0;
             $itemQuantity = isset($cart[$id]) ? $cart[$id]['quantity'] : 0;
             
-            $perPage = 3;
+            $perPage = self::CART_ITEMS_PER_PAGE;
             $currentPage = $request->input('page', 1);
             $totalItems = count($cart);
             $totalPages = ceil($totalItems / $perPage);

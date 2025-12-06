@@ -8,7 +8,9 @@ class ProductController extends Controller
 {
     public function index()
     {
-        $categories = CategoryProduct::all(); // все категории
+        // Категории обычно немногочисленны, eager loading не требуется
+        $categories = CategoryProduct::all();
+        // Используем eager loading для категорий товаров
         $products = Product::with('category')->get()->groupBy('id_category');
         $totalProducts = Product::count();
         return view('products.index', compact('categories','products', 'totalProducts'));
@@ -16,11 +18,17 @@ class ProductController extends Controller
 
     public function search(Request $request)
     {
+        $request->validate([
+            'query' => 'nullable|string|max:255'
+        ]);
+        
         $query = $request->input('query');
-        $categories = CategoryProduct::all(); // все категории
+        // Категории обычно немногочисленны, eager loading не требуется
+        $categories = CategoryProduct::all();
         $totalProducts = Product::count();
 
         if ($query){
+            // Используем eager loading для категорий
             $products = Product::where('name_product', 'LIKE', "%{$query}%")
             ->orWhere('description_product', 'LIKE', "%{$query}%")
             ->with('category')
@@ -59,7 +67,7 @@ class ProductController extends Controller
         if (!$product->isAvailableInQuantity($totalQuantity)) {
             $availableToAdd = max(0, $maxAvailable - $quantityInCart);
             $errorMessage = $availableToAdd > 0 
-                ? "На данный момент можно добавить в корзину еще не более {$availableToAdd} шт. этого товара (уже в корзине: {$quantityInCart} шт.)."
+                ? "На данный момент в корзину можно добавить не более {$availableToAdd} шт. этого товара (в корзине: {$quantityInCart} шт.)."
                 : "К сожалению, мы не можем приготовить больше количества данного блюда.";
                 
             return response()->json([

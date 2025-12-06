@@ -13,10 +13,8 @@ class AdminController extends Controller
 {
     public function index(Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
+        // Авторизация проверяется middleware в routes
+        // Категории обычно немногочисленны, но для консистентности можно использовать кэш
         $categories = CategoryProduct::all();
         $products = Product::with('category')->paginate(10);
         return view('admin.products.index', compact('products', 'categories'));
@@ -24,10 +22,7 @@ class AdminController extends Controller
 
     public function create(Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
+        // Авторизация проверяется middleware в routes
         $categories = CategoryProduct::all();
         $ingredients = Ingredient::all();
         return view('admin.products.create', compact('categories', 'ingredients'));
@@ -35,10 +30,7 @@ class AdminController extends Controller
 
     public function store(Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
+        // Авторизация проверяется middleware в routes
         $request->validate([
             'name_product' => 'required|string|max:255|unique:products,name_product',
             'description_product' => 'required|string|max:300',
@@ -89,10 +81,7 @@ class AdminController extends Controller
 
     public function edit(Product $product,Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
+        // Авторизация проверяется middleware в routes
         $categories = CategoryProduct::all();
         $ingredients = Ingredient::all();
         return view('admin.products.edit', compact('product', 'categories', 'ingredients'));
@@ -100,10 +89,7 @@ class AdminController extends Controller
 
     public function update(Request $request, Product $product)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
+        // Авторизация проверяется middleware в routes
         $request->validate([
             'name_product' => [
                 'required',
@@ -153,10 +139,7 @@ class AdminController extends Controller
 
     public function destroy(Product $product,Request $request)
     {
-        $user = $request->user();
-        if(!$user || !$user->isAdmin()){
-            abort(403,'У вас нет прав доступа к этой странице.');
-        }
+        // Авторизация проверяется middleware в routes
         $product->delete();
         return redirect()->route('admin.products.index')->with('success', 'Товар успешно удален');
     }

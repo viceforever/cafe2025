@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Shift;
 use App\Models\User;
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -52,9 +53,9 @@ class ShiftHistoryController extends Controller
             Log::info('[v0] Filtering order', [
                 'order_id' => $order->id,
                 'status' => $order->status,
-                'is_cancelled' => $order->status === 'Отменен'
+                'is_cancelled' => OrderStatus::isCancelled($order->status)
             ]);
-            return $order->status !== 'Отменен';
+            return !OrderStatus::isCancelled($order->status);
         });
 
         Log::info('[v0] Active orders count', [

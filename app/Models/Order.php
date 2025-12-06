@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Enums\OrderStatus;
 
 class Order extends Model
 {
@@ -49,11 +50,11 @@ class Order extends Model
     public function getStatusBadgeClassAttribute()
     {
         return match($this->status) {
-            'В обработке' => 'bg-warning',
-            'Готовится' => 'bg-info',
-            'Готов к выдаче' => 'bg-success',
-            'Выдан' => 'bg-secondary',
-            'Отменен' => 'bg-danger',
+            OrderStatus::PENDING => 'bg-warning',
+            OrderStatus::COOKING => 'bg-info',
+            OrderStatus::READY => 'bg-success',
+            OrderStatus::COMPLETED => 'bg-secondary',
+            OrderStatus::CANCELLED => 'bg-danger',
             default => 'bg-primary'
         };
     }

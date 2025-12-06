@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Manager;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shift;
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -14,10 +15,10 @@ class ShiftController extends Controller
     {
         $shifts = Shift::where('user_id', Auth::id())
                       ->withCount(['orders' => function ($query) {
-                          $query->where('status', '<>', 'Отменен');
+                          $query->where('status', '<>', OrderStatus::CANCELLED);
                       }])
                       ->withSum(['orders' => function ($query) {
-                          $query->where('status', '<>', 'Отменен');
+                          $query->where('status', '<>', OrderStatus::CANCELLED);
                       }], 'total_amount')
                       ->orderBy('start_time', 'desc')
                       ->paginate(3);
@@ -60,9 +61,9 @@ class ShiftController extends Controller
             Log::info('[v0] Проверка заказа', [
                 'order_id' => $order->id,
                 'status' => $order->status,
-                'is_cancelled' => $order->status === 'Отменен'
+                'is_cancelled' => OrderStatus::isCancelled($order->status)
             ]);
-            return $order->status !== 'Отменен';
+            return !OrderStatus::isCancelled($order->status);
         });
 
         Log::info('[v0] Статистика заказов', [

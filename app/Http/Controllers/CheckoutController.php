@@ -7,9 +7,11 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Shift;
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
@@ -63,34 +65,36 @@ class CheckoutController extends Controller
         }
 
         $productIds = array_keys($cart);
-        $products = Product::with('ingredients')->whereIn('id', $productIds)->get()->keyBy('id');
-
-        $unavailableProducts = [];
-        foreach ($cart as $id => $item) {
-            $product = $products->get($id);
-            if ($product) {
-                // Проверяем, можем ли мы приготовить нужное количество товара
-                for ($i = 0; $i < $item['quantity']; $i++) {
-                    if (!$product->isAvailable()) {
-                        $unavailableProducts[] = $product->name_product;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!empty($unavailableProducts)) {
-            $errorMessage = 'К сожалению, следующие блюда временно недоступны из-за нехватки ингредиентов: ' . implode(', ', array_unique($unavailableProducts));
-            return redirect()->back()
-                ->withInput()
-                ->with('error', $errorMessage);
-        }
-
+        
+        // Используем транзакцию с блокировками для предотвращения race condition
         DB::beginTransaction();
         try {
+            // Блокируем строки при загрузке продуктов для предотвращения одновременного доступа
+            $products = Product::with(['ingredients' => function($query) {
+                $query->lockForUpdate();
+            }])->whereIn('id', $productIds)->lockForUpdate()->get()->keyBy('id');
+
+            // Оптимизированная проверка доступности - используем isAvailableInQuantity вместо цикла
+            $unavailableProducts = [];
+            foreach ($cart as $id => $item) {
+                $product = $products->get($id);
+                if ($product && !$product->isAvailableInQuantity($item['quantity'])) {
+                    $unavailableProducts[] = $product->name_product;
+                }
+            }
+
+            if (!empty($unavailableProducts)) {
+                DB::rollBack();
+                $errorMessage = 'К сожалению, следующие блюда временно недоступны из-за нехватки ингредиентов: ' . implode(', ', array_unique($unavailableProducts));
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', $errorMessage);
+            }
+
             $activeShift = Shift::where('status', 'active')->first();
             
             if (!$activeShift) {
+                DB::rollBack();
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'В данный момент нет активной смены. Пожалуйста, попробуйте позже.');
@@ -101,7 +105,7 @@ class CheckoutController extends Controller
             $order->user_id = Auth::id();
             $order->shift_id = $activeShift->id;
             $order->total_amount = $this->calculateTotal($cart);
-            $order->status = 'В обработке';
+            $order->status = OrderStatus::PENDING;
             $order->payment_method = $request->payment_method;
             $order->delivery_method = $request->delivery_method;
             
@@ -135,12 +139,11 @@ class CheckoutController extends Controller
                 $orderItem->save();
             }
 
+            // Списываем ингредиенты с валидацией (внутри reduceIngredientsInQuantity)
             foreach ($cart as $id => $item) {
                 $product = $products->get($id);
                 if ($product) {
-                    for ($i = 0; $i < $item['quantity']; $i++) {
-                        $product->reduceIngredients();
-                    }
+                    $product->reduceIngredientsInQuantity($item['quantity']);
                 }
             }
 
@@ -154,7 +157,12 @@ class CheckoutController extends Controller
                 ->with('success', 'Заказ успешно оформлен!');
 
         } catch (\Exception $e) {
-            DB::rollback();
+            DB::rollBack();
+            Log::error('Ошибка при оформлении заказа', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Произошла ошибка при оформлении заказа. Попробуйте еще раз.');

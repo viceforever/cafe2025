@@ -11,7 +11,7 @@ class IngredientController extends Controller
     public function index()
     {
         $ingredients = Ingredient::paginate(4);
-        $lowStockIngredients = Ingredient::whereRaw('quantity <= min_quantity')->get();
+        $lowStockIngredients = Ingredient::whereColumn('quantity', '<=', 'min_quantity')->get();
         
         return view('admin.ingredients.index', compact('ingredients', 'lowStockIngredients'));
     }

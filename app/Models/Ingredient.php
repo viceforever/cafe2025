@@ -42,6 +42,10 @@ class Ingredient extends Model
 
     public function reduceQuantity($amount)
     {
+        // Проверяем, не станет ли остаток отрицательным
+        if ($this->quantity < $amount) {
+            throw new \Exception("Недостаточно ингредиента '{$this->name}'. Доступно: {$this->quantity} {$this->unit}, требуется: {$amount} {$this->unit}");
+        }
         $this->quantity -= $amount;
         $this->save();
     }

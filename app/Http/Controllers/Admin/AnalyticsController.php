@@ -8,6 +8,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Ingredient;
 use App\Models\User;
+use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -79,7 +80,7 @@ class AnalyticsController extends Controller
 
     public function ingredients(Request $request)
     {
-        $lowStockIngredients = Ingredient::whereRaw('quantity <= min_quantity')->get();
+        $lowStockIngredients = Ingredient::whereColumn('quantity', '<=', 'min_quantity')->get();
         $expensiveIngredients = Ingredient::orderBy('cost_per_unit', 'desc')->take(10)->get();
         $ingredientUsage = $this->getIngredientUsage();
 
@@ -125,23 +126,62 @@ class AnalyticsController extends Controller
     private function getTotalRevenue($startDate, $endDate)
     {
         return Order::whereBetween('created_at', [$startDate, $endDate])
-                   ->whereNotIn('status', ['Отменен'])
+                   ->whereNotIn('status', [OrderStatus::CANCELLED])
                    ->sum('total_amount');
     }
 
     private function getTotalOrders($startDate, $endDate)
     {
         return Order::whereBetween('created_at', [$startDate, $endDate])
-                   ->whereNotIn('status', ['Отменен'])
+                   ->whereNotIn('status', [OrderStatus::CANCELLED])
                    ->count();
+    }
+
+    /**
+     * Проверяет, нужно ли учитывать затраты для заказа
+     * 
+     * Затраты учитываются для:
+     * 1. Неотмененных заказов (ингредиенты использованы, выручка получена)
+     * 2. Отмененных заказов в поздних статусах (ингредиенты использованы, выручка не получена)
+     * 
+     * Затраты НЕ учитываются для:
+     * - Отмененных заказов в ранних статусах (ингредиенты возвращены)
+     * 
+     * @param Order $order
+     * @return bool
+     */
+    private function shouldIncludeOrderInCosts(Order $order): bool
+    {
+        // Неотмененные заказы всегда учитываются
+        if ($order->status !== OrderStatus::CANCELLED) {
+            return true;
+        }
+        
+        // Для отмененных заказов без истории статусов мы не можем точно определить,
+        // были ли ингредиенты использованы. Используем консервативный подход:
+        // не учитываем затраты для отмененных заказов.
+        // 
+        // ПРИМЕЧАНИЕ: Это может занижать затраты, если заказ был отменен
+        // в статусе "Готовится" или позже (ингредиенты уже использованы).
+        // Для точного учета необходимо добавить поле в БД для отслеживания
+        // использования ингредиентов или историю статусов.
+        
+        return false;
     }
 
     private function getTotalCosts($startDate, $endDate)
     {
         // Расчет затрат на основе использованных ингредиентов
+        // Учитываем затраты для всех неотмененных заказов
+        // 
+        // ПРИМЕЧАНИЕ: Отмененные заказы в поздних статусах (где ингредиенты уже использованы)
+        // не учитываются, так как у нас нет истории статусов для определения,
+        // был ли заказ в статусе "Готовится" или позже перед отменой.
+        // Это может занижать затраты. Для точного учета необходимо добавить
+        // поле в БД для отслеживания использования ингредиентов.
         $orderItems = OrderItem::whereHas('order', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate])
-                  ->whereNotIn('status', ['Отменен']);
+                  ->whereNotIn('status', [OrderStatus::CANCELLED]);
         })->with('product.ingredients')->get();
 
         $totalCosts = 0;
@@ -159,7 +199,7 @@ class AnalyticsController extends Controller
     private function getPaymentStats($startDate, $endDate)
     {
         return Order::whereBetween('created_at', [$startDate, $endDate])
-                   ->whereNotIn('status', ['Отменен'])
+                   ->whereNotIn('status', [OrderStatus::CANCELLED])
                    ->select('payment_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(total_amount) as total'))
                    ->groupBy('payment_method')
                    ->get();
@@ -168,7 +208,7 @@ class AnalyticsController extends Controller
     private function getDeliveryStats($startDate, $endDate)
     {
         return Order::whereBetween('created_at', [$startDate, $endDate])
-                   ->whereNotIn('status', ['Отменен'])
+                   ->whereNotIn('status', [OrderStatus::CANCELLED])
                    ->select('delivery_method', DB::raw('COUNT(*) as count'), DB::raw('SUM(total_amount) as total'))
                    ->groupBy('delivery_method')
                    ->get();
@@ -178,7 +218,7 @@ class AnalyticsController extends Controller
     {
         return OrderItem::whereHas('order', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate])
-                  ->whereNotIn('status', ['Отменен']);
+                  ->whereNotIn('status', [OrderStatus::CANCELLED]);
         })
         ->select('product_id', DB::raw('SUM(quantity) as total_quantity'), DB::raw('COUNT(*) as order_count'))
         ->with('product')
@@ -192,7 +232,7 @@ class AnalyticsController extends Controller
     {
         return OrderItem::whereHas('order', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate])
-                  ->whereNotIn('status', ['Отменен']);
+                  ->whereNotIn('status', [OrderStatus::CANCELLED]);
         })
         ->select('product_id', DB::raw('SUM(quantity * price) as total_revenue'), DB::raw('SUM(quantity) as total_quantity'))
         ->with('product')
@@ -204,7 +244,7 @@ class AnalyticsController extends Controller
     private function getDailyRevenue($startDate, $endDate)
     {
         return Order::whereBetween('created_at', [$startDate, $endDate])
-                   ->whereNotIn('status', ['Отменен'])
+                   ->whereNotIn('status', [OrderStatus::CANCELLED])
                    ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(total_amount) as revenue'), DB::raw('COUNT(*) as orders'))
                    ->groupBy('date')
                    ->orderBy('date')
@@ -221,7 +261,7 @@ class AnalyticsController extends Controller
 
     private function getMonthlyRevenue()
     {
-        return Order::whereNotIn('status', ['Отменен'])
+        return Order::whereNotIn('status', [OrderStatus::CANCELLED])
                    ->select(DB::raw('YEAR(created_at) as year'), DB::raw('MONTH(created_at) as month'), DB::raw('SUM(total_amount) as revenue'))
                    ->groupBy('year', 'month')
                    ->orderBy('year', 'desc')
@@ -255,7 +295,7 @@ class AnalyticsController extends Controller
     {
         $orderItems = OrderItem::whereHas('order', function ($query) use ($startDate, $endDate) {
             $query->whereBetween('created_at', [$startDate, $endDate])
-                  ->whereNotIn('status', ['Отменен']);
+                  ->whereNotIn('status', [OrderStatus::CANCELLED]);
         })->with('product.ingredients')->get();
 
         $totalUsage = 0;
@@ -285,7 +325,7 @@ class AnalyticsController extends Controller
              JOIN product_ingredients pi ON oi.product_id = pi.product_id 
              JOIN orders o ON oi.order_id = o.id 
              WHERE pi.ingredient_id = ingredients.id 
-             AND o.status != "Отменен"
+             AND o.status != "' . OrderStatus::CANCELLED . '"
              AND o.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             ) as usage_last_30_days
         '))->get();

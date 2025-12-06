@@ -135,12 +135,16 @@
                                 <td>
                                     {{-- Updated dropdown to match admin version with proper attributes --}}
                                     <div class="dropdown dropup">
+                                        {{-- Добавлена проверка: если нет допустимых переходов, кнопка будет отключена --}}
                                         <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
-                                                type="button" data-bs-toggle="dropdown" data-bs-auto-close="true">
+                                                type="button" 
+                                                data-bs-toggle="dropdown" 
+                                                data-bs-auto-close="true"
+                                                @if(empty($order->allowedTransitions)) disabled @endif>
                                             Изменить статус
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
-                                            @foreach(['В обработке', 'Подтвержден', 'Готовится', 'Готов к выдаче', 'Выдан', 'Отменен'] as $status)
+                                            @foreach($order->allowedTransitions ?? [] as $status)
                                                 @if($status !== $order->status)
                                                     <li>
                                                         <form action="{{ route('manager.orders.update-status', $order) }}" method="POST">
