@@ -48,11 +48,15 @@ class Shift extends Model
         return collect();
     }
 
+
     public function getDurationAttribute()
     {
-        if ($this->start_time && $this->end_time) {
-            $start = Carbon::parse($this->start_time);
-            $end = Carbon::parse($this->end_time);
+        $startTime = $this->start_time;
+        $endTime = $this->end_time;
+        
+        if ($startTime && $endTime) {
+            $start = Carbon::parse($startTime);
+            $end = Carbon::parse($endTime);
             
             $diffInMinutes = $start->diffInMinutes($end);
             $hours = intval($diffInMinutes / 60);

@@ -85,5 +85,15 @@ class OrderStatus
     {
         return in_array($to, self::$allowedTransitions[$from] ?? [], true);
     }
-}
 
+    /**
+     * Проверить, является ли статус финальным (после которого нельзя поменять статус)
+     *
+     * @param string $status
+     * @return bool
+     */
+    public static function isFinalStatus(string $status): bool
+    {
+        return in_array($status, [self::COMPLETED, self::CANCELLED]);
+    }
+}

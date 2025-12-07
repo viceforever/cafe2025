@@ -46,7 +46,7 @@
             </small>
             <div id="file-size-error" class="mt-1" style="display: none; color: #000;"></div>
             <!-- Добавлена информация о размере выбранного файла -->
-            <div id="file-size-info" class="text-muted mt-1" style="display: none;"></div>
+            <div id="file-size-info" class="mt-1" style="display: none;"></div>
         </div>
         <div class="mb-3">
             <label for="id_category" class="form-label">Категория товара</label>
@@ -108,7 +108,7 @@ document.getElementById('img_product').addEventListener('change', function() {
             errorDiv.style.display = 'none';
             infoDiv.textContent = `✓ Размер файла: ${fileSizeMB} МБ`;
             infoDiv.style.display = 'block';
-            infoDiv.className = 'text-success mt-1';
+            infoDiv.className = 'mt-1'; // Removed text-success class to use normal styling
             submitBtn.disabled = false;
             submitBtn.title = '';
         }

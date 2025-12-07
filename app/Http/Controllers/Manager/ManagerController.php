@@ -71,6 +71,8 @@ class ManagerController extends Controller
             return redirect()->back()->with('error', 'Вы не можете начать смену. У вас нет расписания на это время.');
         }
 
+        // Сохраняем start_time явно в локальном времени
+        // Laravel автоматически конвертирует в UTC при сохранении
         Shift::create([
             'user_id' => Auth::id(),
             'start_time' => $currentTime,
@@ -84,7 +86,6 @@ class ManagerController extends Controller
     {
         $request->validate([
             'notes' => 'nullable|string|max:1000',
-            'start_time' => 'required|date',
             'end_time' => 'required|date',
             'duration_minutes' => 'required|integer|min:0'
         ]);
@@ -97,44 +98,43 @@ class ManagerController extends Controller
             return redirect()->back()->with('error', 'Активная смена не найдена');
         }
 
-        $startTimeLocal = Carbon::parse($request->start_time)->setTimezone('Asia/Irkutsk')->format('Y-m-d H:i:s');
-        $endTimeLocal = Carbon::parse($request->end_time)->setTimezone('Asia/Irkutsk')->format('Y-m-d H:i:s');
+        // Получаем время окончания в локальном часовом поясе
+        $endTime = Carbon::now('Asia/Irkutsk');
 
-        Log::info('[SHIFT DEBUG] Получены данные с клиента', [
-            'shift_id' => $activeShift->id,
-            'start_time_from_client' => $request->start_time,
-            'end_time_from_client' => $request->end_time,
-            'start_time_local' => $startTimeLocal,
-            'end_time_local' => $endTimeLocal,
-            'duration_minutes' => $request->duration_minutes,
-            'notes' => $request->notes
-        ]);
-
-        // Используем метод модели вместо DB::table
-        $activeShift->endShift($endTimeLocal, $request->notes);
+        // Рассчитываем статистику перед обновлением
+        $stats = $activeShift->getStats();
         
-        // Обновляем start_time отдельно, если он был изменен
-        if ($activeShift->start_time != $startTimeLocal) {
-            $activeShift->update(['start_time' => $startTimeLocal]);
-        }
-
-        Log::info('[SHIFT DEBUG] Обновили смену в БД', [
-            'shift_id' => $activeShift->id
-        ]);
-        
-        Log::info('[SHIFT DEBUG] После обновления', [
+        Log::info('[SHIFT DEBUG] Статистика перед сохранением', [
             'shift_id' => $activeShift->id,
-            'start_time_after' => $activeShift->start_time,
-            'end_time_after' => $activeShift->end_time,
-            'status_after' => $activeShift->status,
-            'duration' => $activeShift->duration
+            'stats' => $stats
         ]);
+
+        // Используем прямой SQL запрос, обновляя все нужные поля включая статистику
+        // start_time больше не будет автоматически обновляться благодаря исправлению в миграции
+        DB::table('shifts')
+            ->where('id', $activeShift->id)
+            ->update([
+                'end_time' => $endTime->format('Y-m-d H:i:s'),
+                'status' => 'completed',
+                'notes' => $request->notes,
+                'total_orders' => $stats['orders_count'],
+                'total_revenue' => $stats['total_revenue'],
+                'cash_sales' => $stats['cash_revenue'],
+                'card_sales' => $stats['card_revenue'],
+                'updated_at' => now()
+            ]);
+
+        // Обновляем модель из БД
+        $activeShift->refresh();
+
+        $startTimeDisplay = Carbon::parse($activeShift->start_time)->format('H:i');
+        $endTimeDisplay = $activeShift->end_time ? Carbon::parse($activeShift->end_time)->format('H:i') : null;
 
         $completedShiftData = [
-            'start_time' => $request->start_time, // ISO формат для JavaScript
-            'end_time' => $request->end_time,     // ISO формат для JavaScript
-            'start_time_display' => Carbon::parse($request->start_time)->setTimezone('Asia/Irkutsk')->format('H:i'),
-            'end_time_display' => Carbon::parse($request->end_time)->setTimezone('Asia/Irkutsk')->format('H:i'),
+            'start_time' => $activeShift->start_time,
+            'end_time' => $activeShift->end_time,
+            'start_time_display' => $startTimeDisplay,
+            'end_time_display' => $endTimeDisplay,
             'duration' => $activeShift->duration
         ];
 

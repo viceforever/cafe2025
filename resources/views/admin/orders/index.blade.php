@@ -142,12 +142,24 @@
                                             @foreach($order->allowedTransitions ?? [] as $status)
                                                 @if($status !== $order->status)
                                                     <li>
-                                                        <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
-                                                            @csrf
-                                                            @method('PATCH')
-                                                            <input type="hidden" name="status" value="{{ $status }}">
-                                                            <button type="submit" class="dropdown-item">{{ $status }}</button>
-                                                        </form>
+                                                        <!-- Added confirmation dialog for final statuses (COMPLETED, CANCELLED) -->
+                                                        @if(\App\Enums\OrderStatus::isFinalStatus($status))
+                                                            <button type="button" 
+                                                                    class="dropdown-item"
+                                                                    data-bs-toggle="modal" 
+                                                                    data-bs-target="#confirmStatusModal"
+                                                                    data-order-id="{{ $order->id }}"
+                                                                    data-status="{{ $status }}">
+                                                                {{ $status }}
+                                                            </button>
+                                                        @else
+                                                            <form action="{{ route('admin.orders.update-status', $order) }}" method="POST">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <input type="hidden" name="status" value="{{ $status }}">
+                                                                <button type="submit" class="dropdown-item">{{ $status }}</button>
+                                                            </form>
+                                                        @endif
                                                     </li>
                                                 @endif
                                             @endforeach
@@ -168,4 +180,46 @@
         </div>
     </div>
 </div>
+
+<!-- Modal confirmation dialog for final status changes -->
+<div class="modal fade" id="confirmStatusModal" tabindex="-1" aria-labelledby="confirmStatusLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmStatusLabel">Подтверждение смены статуса</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите установить статус: <strong id="statusText"></strong>?</p>
+                <div class="alert alert-warning" role="alert">
+                    <strong>⚠️ Внимание!</strong> После установки этого статуса вы не сможете изменить статус заказа. Это действие необратимо.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form id="confirmStatusForm" action="" method="POST" class="d-inline">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" id="statusInput" value="">
+                    <button type="submit" class="btn btn-danger">Подтвердить</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const confirmStatusModal = document.getElementById('confirmStatusModal');
+    if (confirmStatusModal) {
+        confirmStatusModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const orderId = button.getAttribute('data-order-id');
+            const status = button.getAttribute('data-status');
+
+            document.getElementById('statusText').textContent = status;
+            document.getElementById('statusInput').value = status;
+            document.getElementById('confirmStatusForm').action = `/admin/orders/${orderId}/status`;
+        });
+    }
+</script>
 @endsection

@@ -200,8 +200,7 @@
         <div class="modal-content">
             <form action="{{ route('manager.shift.end') }}" method="POST" id="endShiftForm">
                 @csrf
-                <!-- Добавляем скрытые поля для передачи времен -->
-                <input type="hidden" name="start_time" id="hiddenStartTime">
+                <!-- Remove start_time hidden field - we use the time from database -->
                 <input type="hidden" name="end_time" id="hiddenEndTime">
                 <input type="hidden" name="duration_minutes" id="hiddenDurationMinutes">
                 
@@ -269,8 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('shiftTimeDisplay').textContent = 
                 startTimeStr + ' - ' + endTimeStr + ' (' + durationStr + ')';
             
-            // Заполняем скрытые поля для отправки на сервер
-            document.getElementById('hiddenStartTime').value = shiftStartTime.toISOString();
+            // The start_time remains from when the shift was created
             document.getElementById('hiddenEndTime').value = now.toISOString();
             document.getElementById('hiddenDurationMinutes').value = durationMinutes;
         });

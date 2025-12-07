@@ -178,7 +178,7 @@ class AdminOrderController extends Controller
             
             $message = match(true) {
                 $oldStatus === OrderStatus::CANCELLED && $newStatus !== OrderStatus::CANCELLED => 'Статус изменен, ингредиенты зарезервированы',
-                $newStatus === OrderStatus::COOKING && $oldStatus !== OrderStatus::COOKING => 'Статус изменен на "Готовится", проверка ингредиентов выполнена',
+                $newStatus === OrderStatus::COOKING && $oldStatus !== OrderStatus::COOKING => 'Статус изменен на "Готовится"',
                 $newStatus === OrderStatus::CANCELLED && OrderStatus::canRestoreIngredients($oldStatus) => 'Статус изменен на "Отменен", ингредиенты восстановлены',
                 $newStatus === OrderStatus::CANCELLED => 'Статус изменен на "Отменен"',
                 default => 'Статус заказа успешно изменен'

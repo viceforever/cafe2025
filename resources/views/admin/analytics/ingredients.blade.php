@@ -190,7 +190,7 @@
                                     <div class="card bg-success text-white">
                                         <div class="card-body">
                                             <h3>{{ number_format($ingredientUsage->sum('usage_last_30_days'), 0) }}</h3>
-                                            <p class="mb-0">Использовано за месяц</p>
+                                            <p class="mb-0">Использовано единиц за месяц</p>
                                         </div>
                                     </div>
                                 </div>
